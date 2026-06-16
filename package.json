@@ -3,17 +3,31 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "turbo run next:dev convex:dev --ui=tui",
+    "tui": "turbo run next:dev convex:dev --ui=tui",
+    "dev:tui": "turbo run next:dev convex:dev --ui=tui",
+    "next:dev": "next dev",
+    "convex:dev": "convex dev",
+    "convex:codegen": "convex codegen",
+    "convex:seed": "bun scripts/seed-convex.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "bun test",
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "geist": "^1.7.1",
+    "@types/bun": "^1.3.14",
+    "axios": "^1.18.0",
+    "convex": "^1.41.0",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^1.20.0",
     "next": "16.2.0",
     "react": "19.2.3",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-hook-form": "^7.79.0",
+    "react-hot-toast": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
@@ -23,6 +37,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "16.0.1",
     "tailwindcss": "^4.2.1",
+    "turbo": "2.9.18",
     "typescript": "^5.9.3"
   },
   "packageManager": "bun@1.3.14"

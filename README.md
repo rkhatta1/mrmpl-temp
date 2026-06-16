@@ -1,54 +1,55 @@
-# Turborepo non-monorepo starter
+# MRMPL Next.js App
 
-This Turborepo starter is maintained by the Turborepo core team.
+This is the Bun + Next.js migration workspace for the MRMPL site.
 
-## Using this example
+## Development
 
-Run the following command:
+Run every long-lived dev process in one Turborepo TUI:
 
 ```sh
-npx create-turbo@latest -e non-monorepo
+bun run dev
 ```
 
-## What's inside?
+This opens the Turbo TUI and runs:
 
-This Turborepo uses a single, non-monorepo project (in this case, a single Next.js application).
+- `next:dev` - Next.js dev server
+- `convex:dev` - Convex dev sync/watch process
 
-### Tasks
+The same command is also available as:
 
-There are several Turborepo tasks already set up for you to use.
-
-#### Build the application
-
-```
-bun turbo build
+```sh
+bun run tui
+bun run dev:tui
 ```
 
-#### Lint source code
+## Tasks
+
+Build the application:
 
 ```
-bun turbo lint
+bun run build
 ```
 
-#### Type check source code
+Lint source code:
 
 ```
-bun turbo check-types
+bun run lint
 ```
 
-#### Run the application's development server
+Type check source code:
 
 ```
-bun turbo dev
+bun run check-types
 ```
 
-## Useful Links
+Run tests:
 
-Learn more about the power of Turborepo:
+```
+bun run test
+```
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+Seed Convex:
+
+```
+bun run convex:seed
+```

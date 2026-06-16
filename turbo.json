@@ -3,14 +3,39 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "inputs": ["$TURBO_DEFAULT$", ".env", ".env.*"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"],
+      "env": ["CONVEX_URL", "NEXT_PUBLIC_CONVEX_URL", "NEXT_PUBLIC_CONVEX_SITE_URL", "NEXT_PUBLIC_API_URL"]
     },
-    "lint": {},
-    "check-types": {},
-    "dev": {
+    "lint": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": []
+    },
+    "check-types": {
+      "inputs": ["$TURBO_DEFAULT$", ".env", ".env.*"],
+      "outputs": ["tsconfig.tsbuildinfo", ".next/types/**", ".next/dev/types/**"]
+    },
+    "next:dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": ["CONVEX_URL", "NEXT_PUBLIC_CONVEX_URL", "NEXT_PUBLIC_CONVEX_SITE_URL", "NEXT_PUBLIC_API_URL"]
+    },
+    "convex:dev": {
+      "cache": false,
+      "persistent": true,
+      "env": ["CONVEX_DEPLOYMENT", "CONVEX_URL", "NEXT_PUBLIC_CONVEX_URL", "NEXT_PUBLIC_CONVEX_SITE_URL"]
+    },
+    "convex:codegen": {
+      "cache": false,
+      "outputs": ["convex/_generated/**"],
+      "env": ["CONVEX_DEPLOYMENT", "CONVEX_URL", "NEXT_PUBLIC_CONVEX_URL"]
+    },
+    "convex:seed": {
+      "dependsOn": ["convex:codegen"],
+      "cache": false,
+      "env": ["CONVEX_DEPLOYMENT", "CONVEX_URL", "NEXT_PUBLIC_CONVEX_URL"]
     }
   }
 }
