@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import BrandThemeWidget from "@/components/BrandThemeWidget";
 import { CompareProvider } from "@/contexts/CompareContext";
 
 type SiteShellProps = {
@@ -27,6 +28,7 @@ export default function SiteShell({
           <Header logoSrc={headerLogoSrc} logoClassName={headerLogoClassName} />
           <main>{children}</main>
           <Footer />
+          <BrandThemeWidget />
         </div>
         <Toaster position="top-right" />
       </Suspense>

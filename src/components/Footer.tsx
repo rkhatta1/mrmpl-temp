@@ -63,7 +63,7 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="bg-gradient-to-r from-[#083D1B] to-[#021D0D] border-t border-primary/20">
+    <footer className="gradient-footer border-t border-primary/20">
       <div className="container mx-auto px-4 pt-20 pb-5">
         <div className="grid lg:grid-cols-5 md:grid-cols-2 gap-12 mb-16">
           {/* Company Information (Leftmost Column) */}
