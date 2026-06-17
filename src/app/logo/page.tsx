@@ -3,7 +3,7 @@ import Home from "@/features/site/pages/Home";
 
 export default function LogoPage() {
   return (
-    <SiteShell headerLogoSrc="/mrmpl-full-green.svg" headerLogoClassName="h-12 w-auto">
+    <SiteShell headerLogoSrc="/mrmpl-medium-green.svg" headerLogoClassName="h-8 w-auto">
       <Home />
     </SiteShell>
   );

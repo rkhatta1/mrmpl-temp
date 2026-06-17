@@ -1,52 +1,22 @@
 "use client";
 
-import { Palette, RotateCcw, X } from "lucide-react";
+import { Check, Loader2, Palette, RotateCcw, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-type ThemeRole =
-  | "primaryText"
-  | "secondaryText"
-  | "primaryAccent"
-  | "surfaceTint"
-  | "buttonPrimary"
-  | "buttonHover"
-  | "footerStart"
-  | "footerEnd";
-
-type ThemeValues = Record<ThemeRole, string>;
+import {
+  applyBrandTheme,
+  BRAND_THEME_ROLES,
+  BRAND_THEME_STORAGE_KEY,
+  DEFAULT_BRAND_THEME,
+  normalizeBrandTheme,
+  type ThemeRole,
+  type ThemeValues,
+} from "@/lib/brand-theme";
 
 type ColorGroup = {
   name: string;
   colors: string[];
 };
-
-const STORAGE_KEY = "mrm-brand-theme";
-
-const DEFAULT_THEME: ThemeValues = {
-  primaryText: "#006937",
-  secondaryText: "#4D4D4D",
-  primaryAccent: "#006937",
-  surfaceTint: "#F2F2F2",
-  buttonPrimary: "#0D793D",
-  buttonHover: "#103C1E",
-  footerStart: "#083D1B",
-  footerEnd: "#021D0D",
-};
-
-const ROLE_CONFIG: Array<{
-  id: ThemeRole;
-  label: string;
-  cssVar: string;
-}> = [
-  { id: "primaryText", label: "Primary text", cssVar: "--mrm-primary-text" },
-  { id: "secondaryText", label: "Secondary text", cssVar: "--mrm-secondary-text" },
-  { id: "primaryAccent", label: "Primary accent", cssVar: "--mrm-primary-accent" },
-  { id: "surfaceTint", label: "Surface tint", cssVar: "--mrm-surface-tint" },
-  { id: "buttonPrimary", label: "Button primary", cssVar: "--mrm-button-primary" },
-  { id: "buttonHover", label: "Button hover", cssVar: "--mrm-button-hover" },
-  { id: "footerStart", label: "Footer start", cssVar: "--mrm-footer-start" },
-  { id: "footerEnd", label: "Footer end", cssVar: "--mrm-footer-end" },
-];
 
 const COLOR_GROUPS: ColorGroup[] = [
   {
@@ -120,7 +90,7 @@ const COLOR_GROUPS: ColorGroup[] = [
 const PRESETS: Array<{ name: string; values: ThemeValues }> = [
   {
     name: "Current",
-    values: DEFAULT_THEME,
+    values: DEFAULT_BRAND_THEME,
   },
   {
     name: "PDF Green",
@@ -163,56 +133,89 @@ const PRESETS: Array<{ name: string; values: ThemeValues }> = [
   },
 ];
 
-function normalizeTheme(value: unknown): ThemeValues {
-  if (!value || typeof value !== "object") return DEFAULT_THEME;
-
-  return ROLE_CONFIG.reduce((theme, role) => {
-    const candidate = (value as Partial<ThemeValues>)[role.id];
-    theme[role.id] = typeof candidate === "string" && /^#[0-9a-f]{6}$/i.test(candidate)
-      ? candidate.toUpperCase()
-      : DEFAULT_THEME[role.id];
+function readAppliedTheme() {
+  const styles = window.getComputedStyle(document.documentElement);
+  const values = BRAND_THEME_ROLES.reduce<Partial<ThemeValues>>((theme, role) => {
+    theme[role.id] = styles.getPropertyValue(role.cssVar).trim();
     return theme;
-  }, {} as ThemeValues);
-}
+  }, {});
 
-function applyTheme(theme: ThemeValues) {
-  const root = document.documentElement;
-  ROLE_CONFIG.forEach((role) => {
-    root.style.setProperty(role.cssVar, theme[role.id]);
-  });
+  return normalizeBrandTheme(values);
 }
 
 export default function BrandThemeWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<ThemeRole>("buttonPrimary");
-  const [theme, setTheme] = useState<ThemeValues>(DEFAULT_THEME);
+  const [theme, setTheme] = useState<ThemeValues>(DEFAULT_BRAND_THEME);
+  const [globalTheme, setGlobalTheme] = useState<ThemeValues>(DEFAULT_BRAND_THEME);
+  const [hasLocalDraft, setHasLocalDraft] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const selectedRoleConfig = ROLE_CONFIG.find((role) => role.id === selectedRole) ?? ROLE_CONFIG[0];
+  const selectedRoleConfig =
+    BRAND_THEME_ROLES.find((role) => role.id === selectedRole) ?? BRAND_THEME_ROLES[0];
 
   const allColors = useMemo(() => {
     return Array.from(new Set(COLOR_GROUPS.flatMap((group) => group.colors.map((color) => color.toUpperCase()))));
   }, []);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
-      applyTheme(DEFAULT_THEME);
-      return;
+    let cancelled = false;
+    let hasSavedDraft = false;
+    const appliedTheme = readAppliedTheme();
+
+    setTheme(appliedTheme);
+    setGlobalTheme(appliedTheme);
+
+    const saved = window.localStorage.getItem(BRAND_THEME_STORAGE_KEY);
+    if (saved) {
+      try {
+        const nextTheme = normalizeBrandTheme(JSON.parse(saved));
+        hasSavedDraft = true;
+        setTheme(nextTheme);
+        setHasLocalDraft(true);
+        applyBrandTheme(nextTheme);
+      } catch {
+        window.localStorage.removeItem(BRAND_THEME_STORAGE_KEY);
+      }
     }
 
-    try {
-      const nextTheme = normalizeTheme(JSON.parse(saved));
-      setTheme(nextTheme);
-      applyTheme(nextTheme);
-    } catch {
-      applyTheme(DEFAULT_THEME);
-    }
+    const loadGlobalTheme = async () => {
+      try {
+        const response = await fetch("/api/brand-theme", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const nextGlobalTheme = normalizeBrandTheme(payload?.data?.values);
+        if (cancelled) return;
+
+        setGlobalTheme(nextGlobalTheme);
+        if (!hasSavedDraft) {
+          setTheme(nextGlobalTheme);
+          applyBrandTheme(nextGlobalTheme);
+        }
+      } catch {
+        if (!cancelled) {
+          setStatusMessage("Could not load the global theme. Local previews still work.");
+        }
+      }
+    };
+
+    void loadGlobalTheme();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const updateTheme = (nextTheme: ThemeValues) => {
-    setTheme(nextTheme);
-    applyTheme(nextTheme);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextTheme));
+    const normalizedTheme = normalizeBrandTheme(nextTheme);
+
+    setTheme(normalizedTheme);
+    setHasLocalDraft(true);
+    setStatusMessage("Local preview saved. Apply to publish globally.");
+    applyBrandTheme(normalizedTheme);
+    window.localStorage.setItem(BRAND_THEME_STORAGE_KEY, JSON.stringify(normalizedTheme));
   };
 
   const updateRole = (role: ThemeRole, color: string) => {
@@ -220,7 +223,43 @@ export default function BrandThemeWidget() {
   };
 
   const resetTheme = () => {
-    updateTheme(DEFAULT_THEME);
+    setTheme(globalTheme);
+    setHasLocalDraft(false);
+    setStatusMessage("Preview reset to the current global theme.");
+    applyBrandTheme(globalTheme);
+    window.localStorage.removeItem(BRAND_THEME_STORAGE_KEY);
+  };
+
+  const applyGlobalTheme = async () => {
+    const values = normalizeBrandTheme(theme);
+
+    setIsApplying(true);
+    setStatusMessage(null);
+
+    try {
+      const response = await fetch("/api/brand-theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ values }),
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message ?? "Could not apply the global theme.");
+      }
+
+      const appliedTheme = normalizeBrandTheme(payload.data?.values ?? values);
+      setTheme(appliedTheme);
+      setGlobalTheme(appliedTheme);
+      setHasLocalDraft(false);
+      setStatusMessage("Applied globally.");
+      applyBrandTheme(appliedTheme);
+      window.localStorage.removeItem(BRAND_THEME_STORAGE_KEY);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Could not apply the global theme.");
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   return (
@@ -230,15 +269,26 @@ export default function BrandThemeWidget() {
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
             <div>
               <div className="text-sm font-semibold text-gray-900">Brand palette mixer</div>
-              <div className="text-xs text-gray-500">MRM Brand Overview v1.pdf</div>
+              <div className="text-xs text-gray-500">Local preview until applied</div>
             </div>
             <div className="flex items-center gap-1">
               <button
                 type="button"
+                onClick={applyGlobalTheme}
+                disabled={isApplying}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-gray-950 px-2.5 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                title="Apply globally"
+                aria-label="Apply theme globally"
+              >
+                {isApplying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                <span>Apply</span>
+              </button>
+              <button
+                type="button"
                 onClick={resetTheme}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-600 hover:bg-gray-100"
-                title="Reset palette"
-                aria-label="Reset palette"
+                title="Reset preview to global theme"
+                aria-label="Reset preview to global theme"
               >
                 <RotateCcw className="h-4 w-4" />
               </button>
@@ -255,6 +305,15 @@ export default function BrandThemeWidget() {
           </div>
 
           <div className="max-h-[calc(min(76vh,720px)-57px)] overflow-y-auto p-4">
+            <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <div className="text-xs font-semibold text-gray-700">
+                {hasLocalDraft ? "Previewing local theme" : "Using global theme"}
+              </div>
+              <div className="mt-1 text-xs leading-5 text-gray-500">
+                {statusMessage ?? "Changes stay in this browser until Apply publishes them globally."}
+              </div>
+            </div>
+
             <div className="mb-4 grid grid-cols-2 gap-2">
               {PRESETS.map((preset) => (
                 <button
@@ -285,7 +344,7 @@ export default function BrandThemeWidget() {
               onChange={(event) => setSelectedRole(event.target.value as ThemeRole)}
               className="mb-4 h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-gray-500"
             >
-              {ROLE_CONFIG.map((role) => (
+              {BRAND_THEME_ROLES.map((role) => (
                 <option key={role.id} value={role.id}>
                   {role.label}
                 </option>

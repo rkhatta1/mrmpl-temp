@@ -12,6 +12,17 @@ const dimension = v.object({
   notes: v.optional(v.string()),
 });
 
+const brandThemeValues = v.object({
+  primaryText: v.string(),
+  secondaryText: v.string(),
+  primaryAccent: v.string(),
+  surfaceTint: v.string(),
+  buttonPrimary: v.string(),
+  buttonHover: v.string(),
+  footerStart: v.string(),
+  footerEnd: v.string(),
+});
+
 export default defineSchema({
   categories: defineTable({
     externalId: v.string(),
@@ -76,4 +87,11 @@ export default defineSchema({
   })
     .index("by_submitted_at", ["submittedAt"])
     .index("by_email", ["email"]),
+
+  brandThemeSettings: defineTable({
+    key: v.string(),
+    values: brandThemeValues,
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_key", ["key"]),
 });

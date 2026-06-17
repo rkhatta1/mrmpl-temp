@@ -203,13 +203,13 @@ const Quality = () => {
                         }}
                       />
                       {/* Fallback icon display if image doesn't load */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-primary-soft opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+                      <div className="absolute inset-0 flex items-center justify-center bg-primary/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
                         <process.icon className="h-12 w-12 text-primary" />
                       </div>
                     </div>
                     <CardHeader className="pb-2">
                       <div className="flex items-start gap-2 mb-2">
-                        <div className="w-14 h-14 bg-primary-soft rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                           <process.icon className="h-7 w-7 text-primary" />
                         </div>
                         <div className="flex-1">
