@@ -10,6 +10,8 @@
     "convex:dev": "convex dev",
     "convex:codegen": "convex codegen",
     "convex:seed": "bun scripts/seed-convex.ts",
+    "sync:priority-product-images": "bun scripts/sync-priority-product-images.ts",
+    "upload:product-images": "bun scripts/upload-product-images.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -27,7 +29,8 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.79.0",
     "react-hot-toast": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "uploadthing": "^7.7.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",

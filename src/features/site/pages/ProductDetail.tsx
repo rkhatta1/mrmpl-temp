@@ -19,7 +19,7 @@ import CompareButton from '@/components/CompareButton';
 import { getApplicationsByValues, SECTORS, APPLICATION_OPTIONS } from '@/constants/applications';
 import OptimizedImage from '@/components/OptimizedImage';
 import LazyImage from '@/components/LazyImage';
-import { preferOptimizedProductImage } from '@/lib/image-assets';
+import { getProductImageFallbackSrc, getProductImageSources, preferOptimizedProductImage } from '@/lib/image-assets';
 import { getPublicApiBaseUrl } from '@/lib/api-base-url';
 
 
@@ -313,10 +313,10 @@ const ProductDetail = () => {
             drawings = rawUrls.slice(1, 2);
           }
           photos.forEach((photo, index) => {
-            processedImages.push({ src: preferOptimizedProductImage(photo, productData.partCode, index, 'large'), type: 'photo', alt: `${productData.productName} product photo` });
+            processedImages.push({ ...getProductImageSources(photo, productData.partCode, index, 'large'), type: 'photo', alt: `${productData.productName} product photo` });
           });
           drawings.forEach((drawing, index) => {
-            processedImages.push({ src: preferOptimizedProductImage(drawing, productData.partCode, index + 1, 'large'), type: 'drawing', alt: `${productData.productName} technical drawing` });
+            processedImages.push({ ...getProductImageSources(drawing, productData.partCode, index + 1, 'large'), type: 'drawing', alt: `${productData.productName} technical drawing` });
           });
         }
 
@@ -436,6 +436,12 @@ const ProductDetail = () => {
             id: related._id,
             name: related.productName || 'Product Name Not Available',
             image: preferOptimizedProductImage(
+              related.images && related.images.length > 0 ? related.images[0] : '/src/assets/products/placeholder.jpg',
+              related.partCode,
+              0,
+              'card'
+            ),
+            imageFallbackSrc: getProductImageFallbackSrc(
               related.images && related.images.length > 0 ? related.images[0] : '/src/assets/products/placeholder.jpg',
               related.partCode,
               0,
@@ -735,10 +741,10 @@ const ProductDetail = () => {
             drawings = rawUrls.slice(1, 2);
           }
           photos.forEach((photo, index) => {
-            processedImages.push({ src: preferOptimizedProductImage(photo, productData.partCode, index, 'large'), type: 'photo', alt: `${productData.productName} product photo` });
+            processedImages.push({ ...getProductImageSources(photo, productData.partCode, index, 'large'), type: 'photo', alt: `${productData.productName} product photo` });
           });
           drawings.forEach((drawing, index) => {
-            processedImages.push({ src: preferOptimizedProductImage(drawing, productData.partCode, index + 1, 'large'), type: 'drawing', alt: `${productData.productName} technical drawing` });
+            processedImages.push({ ...getProductImageSources(drawing, productData.partCode, index + 1, 'large'), type: 'drawing', alt: `${productData.productName} technical drawing` });
           });
         }
 
@@ -857,6 +863,7 @@ const ProductDetail = () => {
                 {product.images && product.images.length > 0 && product.images[currentImageIndex] ? (
                   <OptimizedImage
                     src={product.images[currentImageIndex].src || product.images[currentImageIndex]}
+                    fallbackSrc={product.images[currentImageIndex].fallbackSrc}
                     alt={product.images[currentImageIndex].alt || product.name}
                     className="w-full h-full"
                     aspectRatio="1/1"
@@ -909,6 +916,7 @@ const ProductDetail = () => {
                     >
                       <LazyImage
                         src={image.src || image}
+                        fallbackSrc={image.fallbackSrc}
                         alt={image.alt || `${product.name} - Image ${index + 1}`}
                         className="w-full h-full object-contain bg-muted/30 p-1"
                         eager={index === 0}
@@ -1621,6 +1629,7 @@ const ProductDetail = () => {
                     <div className="aspect-square bg-muted/30 overflow-hidden">
                       <OptimizedImage
                         src={related.image}
+                        fallbackSrc={related.imageFallbackSrc}
                         alt={related.name}
                         className="group-hover:scale-105 transition-transform p-4"
                         aspectRatio="1/1"

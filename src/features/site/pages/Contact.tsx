@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
-import { uploadToCloudinary } from "@/lib/cloudinary";
 import { motion } from "framer-motion";
 import { useSEO } from "@/hooks/useSEO";
 import { 
@@ -14,8 +13,7 @@ import {
   Clock, 
   User,
   Building2,
-  FileText,
-  UploadCloud
+  FileText
 } from "lucide-react";
 
 export default function Contact() {
@@ -26,19 +24,10 @@ export default function Contact() {
     "Request quotes or custom orders for precision brass fittings. Email info@mayankrawmint.com or call +91-96245 33303."
   );
   const [submitting, setSubmitting] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState(null);
 
   async function onSubmit(values) {
     try {
       setSubmitting(true);
-      let photoUrl = null;
-
-      if (values.photo?.[0]) {
-        setUploading(true);
-        photoUrl = await uploadToCloudinary(values.photo[0]);
-        setUploading(false);
-      }
 
       const payload = {
         name: values.name.trim(),
@@ -46,19 +35,16 @@ export default function Contact() {
         email: values.email?.trim() || "",
         companyName: values.companyName?.trim() || "",
         description: values.description?.trim() || "",
-        photoUrl,
       };
 
       await api.post("/contacts", payload);
       toast.success("Thanks! Your query has been submitted.");
       reset();
-      setPreview(null);
     } catch (e) {
       const m = e?.response?.data?.message || e.message || "Something went wrong";
       toast.error(m);
     } finally {
       setSubmitting(false);
-      setUploading(false);
     }
   }
 
@@ -354,40 +340,10 @@ export default function Contact() {
                   </div>
                 </div>
 
-                {/* Attach Photo */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Attach Photo (optional)
-                  </label>
-                  <label className="flex items-center gap-3 border border-gray-300 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                    <UploadCloud className="h-5 w-5 text-green-600" />
-                    <span className="text-sm text-gray-600">Choose an image...</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      {...register("photo")}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        setPreview(file ? URL.createObjectURL(file) : null);
-                      }}
-                    />
-                  </label>
-                  {(uploading || submitting) && (
-                    <span className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                      {uploading ? "Uploading..." : "Submitting..."}
-                    </span>
-                  )}
-                  {preview && (
-                    <img src={preview} alt="preview" className="mt-3 w-32 h-32 object-cover rounded-lg border" />
-                  )}
-                </div>
-
                 {/* Submit Button */}
                 <motion.button
                   type="submit"
-                  disabled={uploading || submitting}
+                  disabled={submitting}
                   className="cursor-pointer w-full md:w-auto px-5 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-60 inline-flex items-center gap-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

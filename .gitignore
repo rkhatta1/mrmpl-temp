@@ -42,5 +42,5 @@ next-env.d.ts
 
 .turbo
 .convex
-convex/_generated
 public/optimized/products
+.uploadthing/

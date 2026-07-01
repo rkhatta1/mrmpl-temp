@@ -32,6 +32,7 @@ const LazyImage = ({
   alt = '',
   className = '',
   placeholder = '/optimized/site/logo-86.webp',
+  fallbackSrc,
   eager = false,
   sizes,
   style = {},
@@ -90,6 +91,12 @@ const LazyImage = ({
   };
 
   const handleError = (e) => {
+    if (fallbackSrc && imageSrc !== fallbackSrc) {
+      setIsLoaded(false);
+      setImageSrc(fallbackSrc);
+      return;
+    }
+
     setHasError(true);
     if (onError) {
       onError(e);

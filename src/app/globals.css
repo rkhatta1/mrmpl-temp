@@ -60,13 +60,13 @@ html {
   --sidebar-border: 220 13% 91%;
   --sidebar-ring: 217.2 91.2% 59.8%;
   --mrm-primary-text: #006937;
-  --mrm-secondary-text: #4d4d4d;
+  --mrm-secondary-text: #4D4D4D;
   --mrm-primary-accent: #006937;
-  --mrm-surface-tint: #f2f2f2;
-  --mrm-button-primary: #0d793d;
-  --mrm-button-hover: #103c1e;
-  --mrm-footer-start: #083d1b;
-  --mrm-footer-end: #021d0d;
+  --mrm-surface-tint: #F2F2F2;
+  --mrm-button-primary: #0D793D;
+  --mrm-button-hover: #103C1E;
+  --mrm-footer-start: #083D1B;
+  --mrm-footer-end: #021D0D;
 }
 
 /* Ensure CSS variables work with Tailwind */

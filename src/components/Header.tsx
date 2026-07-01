@@ -1,6 +1,6 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { FileText, Menu, X, ChevronDown, GitCompare, Search } from "lucide-react";
 import { Button } from "./ui/Button";
 import { useNavigate } from "@/lib/next-router";
@@ -11,11 +11,13 @@ import { useCompare } from "../contexts/CompareContext";
 type HeaderProps = {
   logoSrc?: string;
   logoClassName?: string;
+  logoStyle?: CSSProperties;
 };
 
 const Header = ({
   logoSrc = "/mrmpl-emblem-green.svg",
   logoClassName = "h-12 w-auto",
+  logoStyle,
 }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -68,6 +70,7 @@ const Header = ({
               src={logoSrc} 
               alt="Mayank Raw Mint Logo" 
               className={logoClassName}
+              style={logoStyle}
             />
           </div>
 

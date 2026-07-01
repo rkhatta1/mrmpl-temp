@@ -13,7 +13,6 @@ const eslintConfig = defineConfig([
       "src/features/site/**/*.{ts,tsx}",
       "src/hooks/**/*.{ts,tsx}",
       "src/lib/api.ts",
-      "src/lib/cloudinary.ts",
       "src/services/**/*.{ts,tsx}",
     ],
     rules: {

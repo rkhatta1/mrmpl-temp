@@ -9,7 +9,7 @@ import { X, ArrowLeft, Thermometer, Droplets, Wind, Zap, Snowflake, Settings, Ru
 import { useNavigate } from '@/lib/next-router';
 import Header from '@/components/Header';
 import OptimizedImage from '@/components/OptimizedImage';
-import { preferOptimizedProductImage } from '@/lib/image-assets';
+import { getProductImageFallbackSrc, preferOptimizedProductImage } from '@/lib/image-assets';
 
 const Compare = () => {
   const { compareList, removeFromCompare, clearCompareList } = useCompare();
@@ -131,6 +131,14 @@ const Compare = () => {
                             src={preferOptimizedProductImage(
                               product.images?.[0]?.src || 
                               (Array.isArray(product.images) ? product.images[0] : product.images) || 
+                              '/placeholder-product.jpg',
+                              product.partCode || product.catalogueCode,
+                              0,
+                              'card'
+                            )}
+                            fallbackSrc={getProductImageFallbackSrc(
+                              product.images?.[0]?.src ||
+                              (Array.isArray(product.images) ? product.images[0] : product.images) ||
                               '/placeholder-product.jpg',
                               product.partCode || product.catalogueCode,
                               0,

@@ -14,7 +14,7 @@ import { useCompare } from "@/contexts/CompareContext";
 import { useSearchParams, useNavigate } from "@/lib/next-router";
 import { useSEO } from "@/hooks/useSEO";
 import OptimizedImage from "@/components/OptimizedImage";
-import { preferOptimizedProductImage } from "@/lib/image-assets";
+import { getProductImageFallbackSrc, preferOptimizedProductImage } from "@/lib/image-assets";
 import { getPublicApiBaseUrl } from "@/lib/api-base-url";
 
 const Products = () => {
@@ -964,6 +964,7 @@ const Products = () => {
                       {product.images && product.images.length > 0 ? (
                         <OptimizedImage
                           src={preferOptimizedProductImage(product.images[0], product.partCode, 0, "card")}
+                          fallbackSrc={getProductImageFallbackSrc(product.images[0], product.partCode, 0, "card")}
                           alt={product.productName}
                           className="cursor-pointer group-hover:scale-105 transition-transform duration-300"
                           aspectRatio="1/1"
@@ -1092,6 +1093,7 @@ const Products = () => {
                 {selectedProduct.images && selectedProduct.images.length > 0 ? (
                   <OptimizedImage
                     src={preferOptimizedProductImage(selectedProduct.images[0], selectedProduct.partCode, 0, "thumb")}
+                    fallbackSrc={getProductImageFallbackSrc(selectedProduct.images[0], selectedProduct.partCode, 0, "thumb")}
                     alt={selectedProduct.productName}
                     className="w-16 h-16 rounded"
                     aspectRatio="1/1"
