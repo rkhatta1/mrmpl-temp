@@ -95,7 +95,7 @@ const QualitySection = () => {
               <p className="text-sm text-gray-600 mb-6">Pre-Dispatch Inspection Report</p>
               <div className="flex flex-col gap-3">
                 <Button 
-                  onClick={() => window.open('/PDIR.pdf', '_blank')}
+                  onClick={() => window.open('/PDIR.pdf', '_blank', 'noopener,noreferrer')}
                   className="w-full bg-green-600 hover:bg-green-700 text-white cursor-pointer"
                 >
                   <Eye className="mr-2 h-4 w-4" />

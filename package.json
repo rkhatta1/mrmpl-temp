@@ -10,6 +10,7 @@
     "convex:dev": "convex dev",
     "convex:codegen": "convex codegen",
     "convex:seed": "bun scripts/seed-convex.ts",
+    "products:merge-old": "bun scripts/merge-old-products.ts",
     "sync:priority-product-images": "bun scripts/sync-priority-product-images.ts",
     "upload:product-images": "bun scripts/upload-product-images.ts",
     "build": "next build",
