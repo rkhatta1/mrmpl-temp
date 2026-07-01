@@ -34,9 +34,26 @@ const HOME_CATEGORY_IMAGES = {
   "DOT FITTING": "/optimized/home-categories/dot-fitting.webp",
 };
 
+const HOME_CATEGORY_IMAGE_RATIOS = {
+  "COMPRESSION FITTING": 3 / 2,
+  "PIPE FITTING": 3 / 2,
+  "FLARE FITTING": 3 / 2,
+  "HOSE BARB FITTING": 4 / 3,
+  "PUSH ON HOSE BARB FITTING": 4 / 3,
+  "GARDEN HOSE FITTING": 3 / 2,
+  "BULKHEAD FITTING": 3 / 2,
+  "PUSH IN FITTING": 3 / 2,
+  "DOT FITTING": 3 / 2,
+};
+
 function getHomeCategoryImage(categoryName) {
   const normalizedName = categoryName.toUpperCase().trim();
   return HOME_CATEGORY_IMAGES[normalizedName] || "/optimized/site/logo-86.webp";
+}
+
+function getHomeCategoryImageRatio(categoryName) {
+  const normalizedName = categoryName.toUpperCase().trim();
+  return HOME_CATEGORY_IMAGE_RATIOS[normalizedName] || 3 / 2;
 }
 
 const ProductCategoriesSection = () => {
@@ -159,11 +176,11 @@ const ProductCategoriesSection = () => {
               >
                 {/* Product Image */}
                 <div className="overflow-hidden">
-                  <AspectRatio ratio={4/3} className=" w-full">
+                  <AspectRatio ratio={getHomeCategoryImageRatio(category.name)} className="w-full">
                     <img 
                       src={category.image || getHomeCategoryImage(category.name)}
                       alt={category.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                       loading={index < 3 ? "eager" : "lazy"}
                     />
                   </AspectRatio>

@@ -6,14 +6,17 @@ import { Card, CardContent } from "./ui/Card";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import { getPublicApiBaseUrl } from "@/lib/api-base-url";
 
-const MANUAL_METAL_PRICES = [
-  { name: "Brass", symbol: "BR", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: false },
-  { name: "Copper", symbol: "CU", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: false },
-  { name: "Zinc", symbol: "ZN", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: false }
+const METAL_PRICE_PLACEHOLDERS = [
+  { name: "", symbol: "", price: 0, change: 0, changePercent: 0, unit: "", loading: true },
+  { name: "", symbol: "", price: 0, change: 0, changePercent: 0, unit: "", loading: true },
+  { name: "", symbol: "", price: 0, change: 0, changePercent: 0, unit: "", loading: true }
 ];
 
 const MetalPricesTracker = () => {
   const { elementRef, isVisible } = useScrollAnimation();
+  const [metalPrices, setMetalPrices] = useState([]);
+  const [metalLoading, setMetalLoading] = useState(true);
+  const [metalError, setMetalError] = useState(null);
   const [exchangeRates, setExchangeRates] = useState({
     usdToInr: 0,
     eurToInr: 0,
@@ -22,7 +25,7 @@ const MetalPricesTracker = () => {
 
   const [lastUpdated, setLastUpdated] = useState(null);
   const [currencyLoading, setCurrencyLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [currencyError, setCurrencyError] = useState(null);
 
   // Cache key for localStorage
   const CACHE_KEY = 'currency_rates_cache';
@@ -87,7 +90,42 @@ const MetalPricesTracker = () => {
     setExchangeRates(prev => ({ ...prev, ...rates }));
   };
 
-  // Fetch currency data from backend API. Metal/alloy cards are manual.
+  const noteLastUpdated = (value) => {
+    if (!value) return;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return;
+    setLastUpdated(prev => {
+      if (!prev) return date;
+      return date.getTime() > prev.getTime() ? date : prev;
+    });
+  };
+
+  const fetchMetalPrices = async () => {
+    try {
+      setMetalLoading(true);
+      setMetalError(null);
+
+      const response = await fetch(`${getPublicApiBaseUrl()}/metal/all`, { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "Unknown error from backend");
+      }
+
+      setMetalPrices(data.data.metalPrices || []);
+      noteLastUpdated(data.data.updatedAt);
+    } catch (error) {
+      setMetalError(error.message);
+    } finally {
+      setMetalLoading(false);
+    }
+  };
+
+  // Fetch currency data from backend API.
   const fetchCurrencyData = async (retryCount = 0, forceRefresh = false) => {
     try {
       // Check cache first (unless forcing refresh)
@@ -100,14 +138,14 @@ const MetalPricesTracker = () => {
             applyCurrencyRates(cached.data.currencyRates);
           }
 
-          setLastUpdated(cached.timestamp);
+          noteLastUpdated(cached.timestamp);
           return; // Exit early, using cached data
         }
       }
 
       // Cache is invalid or force refresh - fetch from API
       setCurrencyLoading(true);
-      setError(null);
+      setCurrencyError(null);
 
       const response = await fetch(`${getPublicApiBaseUrl()}/currency/rates`);
       
@@ -125,12 +163,12 @@ const MetalPricesTracker = () => {
           applyCurrencyRates(data.data.currencyRates);
         }
 
-        setLastUpdated(data.data.updatedAt ? new Date(data.data.updatedAt) : new Date());
+        noteLastUpdated(data.data.updatedAt || new Date());
       } else {
-        setError(data.message || 'Unknown error from backend');
+        setCurrencyError(data.message || 'Unknown error from backend');
       }
     } catch (error) {
-      setError(error.message);
+      setCurrencyError(error.message);
       
       // If API fails, try to use cached data as fallback
       const cached = getCachedData();
@@ -138,7 +176,7 @@ const MetalPricesTracker = () => {
         if (cached.data.currencyRates && cached.data.currencyRates.length > 0) {
           applyCurrencyRates(cached.data.currencyRates);
         }
-        setLastUpdated(cached.timestamp);
+        noteLastUpdated(cached.timestamp);
         setCurrencyLoading(false);
         return;
       }
@@ -158,12 +196,14 @@ const MetalPricesTracker = () => {
 
   // Initial data fetch - fetchCurrencyData will check cache automatically
   useEffect(() => {
+    fetchMetalPrices();
     fetchCurrencyData();
   }, []);
 
   // Check cache validity periodically (every hour) and refresh if needed
   useEffect(() => {
     const checkInterval = setInterval(() => {
+      fetchMetalPrices();
       if (!isCacheValid()) {
         fetchCurrencyData(0, true); // Force refresh when cache expires
       }
@@ -182,6 +222,11 @@ const MetalPricesTracker = () => {
     if (change > 0) return "text-green-600";
     if (change < 0) return "text-red-600";
     return "text-gray-500";
+  };
+
+  const formatMetalPrice = (metal) => {
+    const currencyPrefix = !metal.currency || metal.currency === "USD" ? "$" : `${metal.currency} `;
+    return `${currencyPrefix}${metal.price.toFixed(2)}`;
   };
 
   const currencyRates = [
@@ -211,6 +256,10 @@ const MetalPricesTracker = () => {
     }
   ];
 
+  const displayedMetalPrices = metalLoading && metalPrices.length === 0
+    ? METAL_PRICE_PLACEHOLDERS
+    : metalPrices;
+
   return (
     <section ref={elementRef} className="py-16 bg-gray-50">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -229,9 +278,9 @@ const MetalPricesTracker = () => {
         <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 transition-all duration-700 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
-          {MANUAL_METAL_PRICES.map((metal, index) => (
+          {displayedMetalPrices.map((metal, index) => (
             <Card 
-              key={index} 
+              key={metal.symbol || index}
               className="shadow-sm hover:shadow-md transition-all duration-300 border-gray-200 rounded-lg"
               style={{ transitionDelay: `${index * 0.1}s` }}
             >
@@ -249,7 +298,7 @@ const MetalPricesTracker = () => {
                   ) : (
                     <>
                       <div className="text-xl font-bold text-gray-800">
-                        ${metal.price.toFixed(2)}
+                        {formatMetalPrice(metal)}
                       </div>
                       <div className="text-xs text-gray-500">{metal.unit}</div>
                       <div className={`flex items-center space-x-1 text-xs ${getTrendColor(metal.change)}`}>
@@ -265,6 +314,14 @@ const MetalPricesTracker = () => {
             </Card>
           ))}
         </div>
+
+        {metalError && !metalLoading && (
+          <div className="text-center mb-4">
+            <div className="inline-flex rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+              Metal prices are temporarily unavailable.
+            </div>
+          </div>
+        )}
 
         {/* Currency Exchange Rates - Second Row */}
         <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 transition-all duration-700 ${
@@ -309,7 +366,7 @@ const MetalPricesTracker = () => {
           ))}
         </div>
 
-        {error && !currencyLoading && (
+        {currencyError && !currencyLoading && (
           <div className="text-center mb-4">
             <div className="inline-flex rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
               Currency rates are temporarily unavailable.
@@ -322,7 +379,7 @@ const MetalPricesTracker = () => {
           <p className="text-xs text-gray-500">
             *Last updated: {lastUpdated ? lastUpdated.toLocaleString() : "Checking latest data..."}
           </p>
-          {currencyLoading && (
+          {(metalLoading || currencyLoading) && (
             <p className="text-xs text-blue-500 mt-1">🔄 Updating data...</p>
           )}
         </div>

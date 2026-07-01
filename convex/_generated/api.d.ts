@@ -11,6 +11,7 @@
 import type * as brandTheme from "../brandTheme.js";
 import type * as categories from "../categories.js";
 import type * as contacts from "../contacts.js";
+import type * as metalPrices from "../metalPrices.js";
 import type * as products from "../products.js";
 
 import type {
@@ -23,6 +24,7 @@ declare const fullApi: ApiFromModules<{
   brandTheme: typeof brandTheme;
   categories: typeof categories;
   contacts: typeof contacts;
+  metalPrices: typeof metalPrices;
   products: typeof products;
 }>;
 

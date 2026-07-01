@@ -94,4 +94,19 @@ export default defineSchema({
     updatedAt: v.number(),
     updatedBy: v.string(),
   }).index("by_key", ["key"]),
+
+  metalPrices: defineTable({
+    name: v.string(),
+    symbol: v.string(),
+    price: v.number(),
+    change: v.number(),
+    changePercent: v.number(),
+    unit: v.string(),
+    currency: v.string(),
+    sortOrder: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  })
+    .index("by_symbol", ["symbol"])
+    .index("by_sort_order", ["sortOrder"]),
 });

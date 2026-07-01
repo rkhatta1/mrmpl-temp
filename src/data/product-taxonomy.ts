@@ -37,7 +37,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-2",
     "name": "Bulkhead Fitting",
-    "description": "Bulkhead Fitting manufactured by Mayank Raw Mint.",
+    "description": "Bulkhead fittings provide a leak-tight connection through panels or walls for safe fluid or air transfer.",
     "subcategories": [
       {
         "_id": "sub-2-1",
@@ -99,7 +99,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-3",
     "name": "Compression Fitting",
-    "description": "Compression Fitting manufactured by Mayank Raw Mint.",
+    "description": "Used wherever an easy and economical method of connecting tubing is required like instrumentation, hydraulic and pneumatic systems, and are designed for use with aluminium, copper and plastic tubing.",
     "subcategories": [
       {
         "_id": "sub-3-1",
@@ -428,7 +428,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-5",
     "name": "Dot Fitting",
-    "description": "Dot Fitting manufactured by Mayank Raw Mint.",
+    "description": "Push-to-Connect Air Brake Fittings are quick-install pneumatic fittings designed for use in compressed air systems, especially vehicle air brake lines. These fittings allow tubing to be connected instantly by simply pushing the tube into the fitting, where an internal gripping mechanism and O-ring ensure a secure, leak-proof seal.",
     "subcategories": [
       {
         "_id": "sub-5-1",
@@ -440,7 +440,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-6",
     "name": "Flare Fitting",
-    "description": "Flare Fitting manufactured by Mayank Raw Mint.",
+    "description": "Extensively used for fuel, oil, air liquid petroleum(LP) and natural gas lines connections. Can be used with copper, brass, aluminium and welded steel tubing that can be flared.",
     "subcategories": [
       {
         "_id": "sub-6-1",
@@ -674,7 +674,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-8",
     "name": "Garden Hose Fitting",
-    "description": "Garden Hose Fitting manufactured by Mayank Raw Mint.",
+    "description": "They are flexible synthetic rubbers/plastics reinforced with internal webs of fibres. They're smooth to wrap around obstacles while also being tough enough to step on without damage or leaking.",
     "subcategories": [
       {
         "_id": "sub-8-1",
@@ -903,7 +903,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-10",
     "name": "Hose Barb Fitting",
-    "description": "Hose Barb Fitting manufactured by Mayank Raw Mint.",
+    "description": "Hose barbs are continuous ridges or bumps on a fitting that are used to grip the inside diameter of a tube and seal the connection. They dominate the connecting flexible tubing market.",
     "subcategories": [
       {
         "_id": "sub-10-1",
@@ -1221,7 +1221,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-14",
     "name": "Pipe Fitting",
-    "description": "Pipe Fitting manufactured by Mayank Raw Mint.",
+    "description": "Used in applications including water, grease, fuels, LP/natural gas, refrigeration, instrumentation and hydraulic systems. Can be connected to brass, copper and iron pipe in low/medium pressure connections.",
     "subcategories": [
       {
         "_id": "sub-14-1",
@@ -1513,7 +1513,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-15",
     "name": "Push In Fitting",
-    "description": "Push In Fitting manufactured by Mayank Raw Mint.",
+    "description": "Ideal for fast installation and reliable performance, push-in brass fittings allow tool-free tubing connections with a secure, leak-tight seal in pneumatic and fluid systems.",
     "subcategories": [
       {
         "_id": "sub-15-1",
@@ -1535,7 +1535,7 @@ export const PRODUCT_TAXONOMY = [
   {
     "_id": "cat-16",
     "name": "Push On Hose Barb Fitting",
-    "description": "Push On Hose Barb Fitting manufactured by Mayank Raw Mint.",
+    "description": "Fittings have sharper barbs than standard barbed hose fittings to grip rubber push-on hose with no clamps or ferrules required. The more you pull on the fittings, the tighter the hose will grip.",
     "subcategories": [
       {
         "_id": "sub-16-1",

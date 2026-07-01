@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+*:Zone.Identifier
 
 # debug
 npm-debug.log*
@@ -43,4 +44,5 @@ next-env.d.ts
 .turbo
 .convex
 public/optimized/products
+public/home/
 .uploadthing/

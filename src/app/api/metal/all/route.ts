@@ -1,19 +1,41 @@
 import { NextResponse } from "next/server";
 
+import { api, getConvexHttpClient } from "@/lib/convex-server";
+
 export async function GET() {
-  return NextResponse.json({
-    success: true,
-    data: {
-      metalPrices: [
-        { name: "Brass", symbol: "BR", price: 0, change: 0, changePercent: 0, unit: "per ton" },
-        { name: "Copper", symbol: "CU", price: 0, change: 0, changePercent: 0, unit: "per ton" },
-        { name: "Zinc", symbol: "ZN", price: 0, change: 0, changePercent: 0, unit: "per ton" },
-      ],
-      currencyRates: [
-        { fromCurrency: "USD", toCurrency: "INR", rate: 0 },
-        { fromCurrency: "EUR", toCurrency: "INR", rate: 0 },
-        { fromCurrency: "CAD", toCurrency: "INR", rate: 0 },
-      ],
-    },
-  });
+  const convex = getConvexHttpClient();
+  if (!convex) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Convex is not configured",
+      },
+      { status: 503 },
+    );
+  }
+
+  try {
+    const metalPrices = await convex.query(api.metalPrices.list, {});
+    const updatedAt = metalPrices.reduce(
+      (latest, metal) => Math.max(latest, metal.updatedAt),
+      0,
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        metalPrices,
+        updatedAt: updatedAt ? new Date(updatedAt).toISOString() : null,
+        source: "convex",
+      },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: error instanceof Error ? error.message : "Unable to fetch metal prices",
+      },
+      { status: 502 },
+    );
+  }
 }
