@@ -2,7 +2,6 @@
 
 import { Toaster } from "react-hot-toast";
 import { Suspense } from "react";
-import type { CSSProperties } from "react";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,27 +10,15 @@ import { CompareProvider } from "@/contexts/CompareContext";
 
 type SiteShellProps = {
   children: React.ReactNode;
-  headerLogoSrc?: string;
-  headerLogoClassName?: string;
-  headerLogoStyle?: CSSProperties;
 };
 
-export default function SiteShell({
-  children,
-  headerLogoSrc,
-  headerLogoClassName,
-  headerLogoStyle,
-}: SiteShellProps) {
+export default function SiteShell({ children }: SiteShellProps) {
   return (
     <CompareProvider>
       <Suspense fallback={null}>
         <ScrollToTop />
         <div className="min-h-screen">
-          <Header
-            logoSrc={headerLogoSrc}
-            logoClassName={headerLogoClassName}
-            logoStyle={headerLogoStyle}
-          />
+          <Header />
           <main>{children}</main>
           <Footer />
         </div>

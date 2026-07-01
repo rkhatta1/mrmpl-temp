@@ -8,7 +8,6 @@ import { useNavigate } from "@/lib/next-router";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import { AspectRatio } from "./ui/AspectRatio";
 import { categoryService } from "../services/categoryService";
-import { getOptimizedProductImagePath } from "@/lib/image-assets";
 
 // Allowed categories to display in home page and footer (order defines display order)
 const ALLOWED_CATEGORIES = [
@@ -23,22 +22,21 @@ const ALLOWED_CATEGORIES = [
   "DOT FITTING"
 ];
 
-const HOME_CATEGORY_IMAGE_PART_CODES = {
-  "COMPRESSION FITTING": "01-001-001",
-  "PIPE FITTING": "02-061-001",
-  "FLARE FITTING": "03-126-001",
-  "HOSE BARB FITTING": "04-106-001",
-  "PUSH ON HOSE BARB FITTING": "05-227-001",
-  "GARDEN HOSE FITTING": "06-256-001",
-  "BULKHEAD FITTING": "07-305-001",
-  "PUSH IN FITTING": "08-318-001",
-  "DOT FITTING": "09-362-001",
+const HOME_CATEGORY_IMAGES = {
+  "COMPRESSION FITTING": "/optimized/home-categories/compression-fitting.webp",
+  "PIPE FITTING": "/optimized/home-categories/pipe-fitting.webp",
+  "FLARE FITTING": "/optimized/home-categories/flare-fitting.webp",
+  "HOSE BARB FITTING": "/optimized/home-categories/hose-barb-fitting.webp",
+  "PUSH ON HOSE BARB FITTING": "/optimized/home-categories/push-on-hose-barb-fitting.webp",
+  "GARDEN HOSE FITTING": "/optimized/home-categories/garden-hose-fitting.webp",
+  "BULKHEAD FITTING": "/optimized/home-categories/bulkhead-fitting.webp",
+  "PUSH IN FITTING": "/optimized/home-categories/push-in-fitting.webp",
+  "DOT FITTING": "/optimized/home-categories/dot-fitting.webp",
 };
 
 function getHomeCategoryImage(categoryName) {
   const normalizedName = categoryName.toUpperCase().trim();
-  const partCode = HOME_CATEGORY_IMAGE_PART_CODES[normalizedName];
-  return getOptimizedProductImagePath(partCode, 0, "card") || "/optimized/site/logo-86.webp";
+  return HOME_CATEGORY_IMAGES[normalizedName] || "/optimized/site/logo-86.webp";
 }
 
 const ProductCategoriesSection = () => {

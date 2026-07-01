@@ -15,9 +15,9 @@ type HeaderProps = {
 };
 
 const Header = ({
-  logoSrc = "/mrmpl-emblem-green.svg",
-  logoClassName = "h-12 w-auto",
-  logoStyle,
+  logoSrc = "/mrmpl-medium-green.svg",
+  logoClassName = "h-auto w-auto",
+  logoStyle = { width: "150px", maxHeight: "44px" },
 }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
