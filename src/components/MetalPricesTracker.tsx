@@ -1,10 +1,16 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Minus, DollarSign, RefreshCw, Euro, DollarSign as CadIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, DollarSign, Euro, DollarSign as CadIcon } from "lucide-react";
 import { Card, CardContent } from "./ui/Card";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import { getPublicApiBaseUrl } from "@/lib/api-base-url";
+
+const MANUAL_METAL_PRICES = [
+  { name: "Brass", symbol: "BR", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: false },
+  { name: "Copper", symbol: "CU", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: false },
+  { name: "Zinc", symbol: "ZN", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: false }
+];
 
 const MetalPricesTracker = () => {
   const { elementRef, isVisible } = useScrollAnimation();
@@ -13,19 +19,13 @@ const MetalPricesTracker = () => {
     eurToInr: 0,
     cadToInr: 0
   });
-  
-  const [metalPrices, setMetalPrices] = useState([
-    { name: "Brass", symbol: "BR", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: true },
-    { name: "Copper", symbol: "CU", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: true },
-    { name: "Zinc", symbol: "ZN", price: 0, change: 0, changePercent: 0, unit: "per ton", loading: true }
-  ]);
 
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [currencyLoading, setCurrencyLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Cache key for localStorage
-  const CACHE_KEY = 'metal_prices_cache';
+  const CACHE_KEY = 'currency_rates_cache';
   const CACHE_DURATION = 8 * 60 * 60 * 1000; // 8 hours in milliseconds (3 times per day)
 
   // Check if cached data is still valid
@@ -72,168 +72,100 @@ const MetalPricesTracker = () => {
     }
   };
 
-  // Fetch data from backend API
-  const fetchData = async (retryCount = 0, forceRefresh = false) => {
+  const applyCurrencyRates = (currencyRates = []) => {
+    const rates = {};
+    currencyRates.forEach(rate => {
+      if (rate.fromCurrency === 'USD' && rate.toCurrency === 'INR') {
+        rates.usdToInr = rate.rate;
+      } else if (rate.fromCurrency === 'EUR' && rate.toCurrency === 'INR') {
+        rates.eurToInr = rate.rate;
+      } else if (rate.fromCurrency === 'CAD' && rate.toCurrency === 'INR') {
+        rates.cadToInr = rate.rate;
+      }
+    });
+
+    setExchangeRates(prev => ({ ...prev, ...rates }));
+  };
+
+  // Fetch currency data from backend API. Metal/alloy cards are manual.
+  const fetchCurrencyData = async (retryCount = 0, forceRefresh = false) => {
     try {
       // Check cache first (unless forcing refresh)
       if (!forceRefresh && isCacheValid()) {
         const cached = getCachedData();
         if (cached) {
-          console.log('📦 Using cached data');
-          setLoading(false);
-          
-          // Update metal prices from cache
-          if (cached.data.metalPrices && cached.data.metalPrices.length > 0) {
-            const updatedMetalPrices = cached.data.metalPrices.map(metal => ({
-              name: metal.name,
-              symbol: metal.symbol,
-              price: metal.price,
-              change: metal.change,
-              changePercent: metal.changePercent,
-              unit: metal.unit,
-              loading: false
-            }));
-            setMetalPrices(updatedMetalPrices);
-          }
-          
-          // Update currency rates from cache
+          setCurrencyLoading(false);
+
           if (cached.data.currencyRates && cached.data.currencyRates.length > 0) {
-            const rates = {};
-            cached.data.currencyRates.forEach(rate => {
-              if (rate.fromCurrency === 'USD' && rate.toCurrency === 'INR') {
-                rates.usdToInr = rate.rate;
-              } else if (rate.fromCurrency === 'EUR' && rate.toCurrency === 'INR') {
-                rates.eurToInr = rate.rate;
-              } else if (rate.fromCurrency === 'CAD' && rate.toCurrency === 'INR') {
-                rates.cadToInr = rate.rate;
-              }
-            });
-            setExchangeRates(rates);
+            applyCurrencyRates(cached.data.currencyRates);
           }
-          
+
           setLastUpdated(cached.timestamp);
           return; // Exit early, using cached data
         }
       }
 
       // Cache is invalid or force refresh - fetch from API
-      setLoading(true);
+      setCurrencyLoading(true);
       setError(null);
-      console.log('🔄 Fetching data from backend API...');
-      
-      const response = await fetch(`${getPublicApiBaseUrl()}/metal/all`);
+
+      const response = await fetch(`${getPublicApiBaseUrl()}/currency/rates`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('📊 Backend API response:', data);
       
       if (data.success) {
         // Save to cache
         saveToCache(data.data);
-        
-        // Update metal prices
-        if (data.data.metalPrices && data.data.metalPrices.length > 0) {
-          const updatedMetalPrices = data.data.metalPrices.map(metal => ({
-            name: metal.name,
-            symbol: metal.symbol,
-            price: metal.price,
-            change: metal.change,
-            changePercent: metal.changePercent,
-            unit: metal.unit,
-            loading: false
-          }));
-          setMetalPrices(updatedMetalPrices);
-          console.log('✅ Metal prices updated:', updatedMetalPrices);
-        }
-        
-        // Update currency rates
+
         if (data.data.currencyRates && data.data.currencyRates.length > 0) {
-          const rates = {};
-          data.data.currencyRates.forEach(rate => {
-            if (rate.fromCurrency === 'USD' && rate.toCurrency === 'INR') {
-              rates.usdToInr = rate.rate;
-            } else if (rate.fromCurrency === 'EUR' && rate.toCurrency === 'INR') {
-              rates.eurToInr = rate.rate;
-            } else if (rate.fromCurrency === 'CAD' && rate.toCurrency === 'INR') {
-              rates.cadToInr = rate.rate;
-            }
-          });
-          setExchangeRates(rates);
-          console.log('✅ Currency rates updated:', rates);
+          applyCurrencyRates(data.data.currencyRates);
         }
-        
-        setLastUpdated(new Date());
+
+        setLastUpdated(data.data.updatedAt ? new Date(data.data.updatedAt) : new Date());
       } else {
-        console.error('❌ Backend API returned error:', data.message);
         setError(data.message || 'Unknown error from backend');
       }
     } catch (error) {
-      console.error('❌ Error fetching data from backend:', error);
       setError(error.message);
       
       // If API fails, try to use cached data as fallback
       const cached = getCachedData();
       if (cached) {
-        console.log('⚠️ API failed, using cached data as fallback');
-        // Apply cached data (same logic as above)
-        if (cached.data.metalPrices && cached.data.metalPrices.length > 0) {
-          const updatedMetalPrices = cached.data.metalPrices.map(metal => ({
-            name: metal.name,
-            symbol: metal.symbol,
-            price: metal.price,
-            change: metal.change,
-            changePercent: metal.changePercent,
-            unit: metal.unit,
-            loading: false
-          }));
-          setMetalPrices(updatedMetalPrices);
-        }
         if (cached.data.currencyRates && cached.data.currencyRates.length > 0) {
-          const rates = {};
-          cached.data.currencyRates.forEach(rate => {
-            if (rate.fromCurrency === 'USD' && rate.toCurrency === 'INR') {
-              rates.usdToInr = rate.rate;
-            } else if (rate.fromCurrency === 'EUR' && rate.toCurrency === 'INR') {
-              rates.eurToInr = rate.rate;
-            } else if (rate.fromCurrency === 'CAD' && rate.toCurrency === 'INR') {
-              rates.cadToInr = rate.rate;
-            }
-          });
-          setExchangeRates(rates);
+          applyCurrencyRates(cached.data.currencyRates);
         }
         setLastUpdated(cached.timestamp);
-        setLoading(false);
+        setCurrencyLoading(false);
         return;
       }
       
       // Retry logic - retry up to 3 times with increasing delay
       if (retryCount < 3) {
         const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
-        console.log(`🔄 Retrying in ${delay}ms... (attempt ${retryCount + 1}/3)`);
         setTimeout(() => {
-          fetchData(retryCount + 1, forceRefresh);
+          fetchCurrencyData(retryCount + 1, forceRefresh);
         }, delay);
         return;
       }
     } finally {
-      setLoading(false);
+      setCurrencyLoading(false);
     }
   };
 
-  // Initial data fetch - fetchData will check cache automatically
+  // Initial data fetch - fetchCurrencyData will check cache automatically
   useEffect(() => {
-    fetchData();
+    fetchCurrencyData();
   }, []);
 
   // Check cache validity periodically (every hour) and refresh if needed
   useEffect(() => {
     const checkInterval = setInterval(() => {
       if (!isCacheValid()) {
-        console.log('⏰ Cache expired, fetching fresh data...');
-        fetchData(0, true); // Force refresh when cache expires
+        fetchCurrencyData(0, true); // Force refresh when cache expires
       }
     }, 60 * 60 * 1000); // Check every hour
 
@@ -287,17 +219,6 @@ const MetalPricesTracker = () => {
         }`}>
           <div className="flex items-center justify-center gap-4 mb-4">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800">Metal Prices & Currency</h2>
-            {/* <button
-              onClick={() => fetchData()}
-              disabled={loading}
-              className={`p-2 rounded-full transition-all duration-200 ${
-                loading 
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                  : 'bg-green-100 text-green-600 hover:bg-green-200 hover:scale-105'
-              }`}
-            >
-              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-            </button> */}
           </div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Stay informed with updated metal prices and currency conversion for smarter procurement decisions.
@@ -308,7 +229,7 @@ const MetalPricesTracker = () => {
         <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 transition-all duration-700 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
-          {metalPrices.map((metal, index) => (
+          {MANUAL_METAL_PRICES.map((metal, index) => (
             <Card 
               key={index} 
               className="shadow-sm hover:shadow-md transition-all duration-300 border-gray-200 rounded-lg"
@@ -320,7 +241,7 @@ const MetalPricesTracker = () => {
                   <span className="text-sm text-gray-500">{metal.symbol}</span>
                 </div>
                 <div className="space-y-1">
-                  {loading || metal.loading ? (
+                  {metal.loading ? (
                     <div className="animate-pulse">
                       <div className="h-6 bg-gray-200 rounded mb-2"></div>
                       <div className="h-4 bg-gray-200 rounded w-16"></div>
@@ -369,7 +290,7 @@ const MetalPricesTracker = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  {loading ? (
+                  {currencyLoading ? (
                     <div className="animate-pulse">
                       <div className="h-6 bg-gray-200 rounded mb-2"></div>
                       <div className="h-4 bg-gray-200 rounded w-16"></div>
@@ -388,27 +309,20 @@ const MetalPricesTracker = () => {
           ))}
         </div>
 
-        {/* Error Display */}
-        {/* {error && (
+        {error && !currencyLoading && (
           <div className="text-center mb-4">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              <p className="text-sm">⚠️ {error}</p>
-              <button 
-                onClick={() => fetchData()}
-                className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
-              >
-                Retry
-              </button>
+            <div className="inline-flex rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+              Currency rates are temporarily unavailable.
             </div>
           </div>
-        )} */}
+        )}
 
         {/* Timestamp */}
         <div className="text-center">
           <p className="text-xs text-gray-500">
             *Last updated: {lastUpdated ? lastUpdated.toLocaleString() : "Checking latest data..."}
           </p>
-          {loading && (
+          {currencyLoading && (
             <p className="text-xs text-blue-500 mt-1">🔄 Updating data...</p>
           )}
         </div>
