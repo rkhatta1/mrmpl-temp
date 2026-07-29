@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import {
   getAdminBasePath,
+  getAdminHomePath,
+  getAdminLoginPath,
   isAdminHostname,
   normalizeHostname,
 } from "./admin-routing";
@@ -22,5 +24,12 @@ describe("admin hostname routing", () => {
   test("uses root-relative links only on an admin hostname", () => {
     expect(getAdminBasePath("admin.example.com")).toBe("");
     expect(getAdminBasePath("localhost:3000")).toBe("/admin");
+  });
+
+  test("builds login and home paths for both host modes", () => {
+    expect(getAdminLoginPath("admin.example.com")).toBe("/login");
+    expect(getAdminLoginPath("localhost:3000")).toBe("/admin/login");
+    expect(getAdminHomePath("admin.example.com")).toBe("/");
+    expect(getAdminHomePath("localhost:3000")).toBe("/admin");
   });
 });

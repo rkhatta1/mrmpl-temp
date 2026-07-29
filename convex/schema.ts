@@ -109,4 +109,10 @@ export default defineSchema({
   })
     .index("by_symbol", ["symbol"])
     .index("by_sort_order", ["sortOrder"]),
+
+  adminAccessSettings: defineTable({
+    key: v.string(),
+    encryptedCode: v.string(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 });

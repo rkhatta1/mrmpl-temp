@@ -6,7 +6,6 @@ import {
   FolderOpenIcon,
   GaugeIcon,
   PackageIcon,
-  ShieldWarningIcon,
   SidebarIcon,
   SlidersHorizontalIcon,
   TreeStructureIcon,
@@ -16,6 +15,7 @@ import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
 
+import { AdminNavUser } from "@/components/admin/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -128,7 +128,6 @@ function AdminSidebar({
                 aria-label="Toggle Sidebar"
                 className="w-fit"
                 onClick={toggleSidebar}
-                tooltip="Toggle Sidebar"
               >
                 <span className="relative size-4 shrink-0">
                   <span className="absolute inset-0 transition-opacity duration-150 ease-out motion-reduce:transition-none group-hover/menu-button:opacity-0">
@@ -165,18 +164,7 @@ function AdminSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="in-data-[mobile=true]:h-11"
-              disabled
-              tooltip="Authentication will be added in a later phase"
-            >
-              <ShieldWarningIcon />
-              <span>Authentication pending</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <AdminNavUser basePath={basePath} />
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
-import { AdminShell } from "@/components/admin/admin-shell";
-import { getAdminBasePath } from "@/lib/admin-routing";
+import { AdminPageTransition } from "@/components/admin/page-transition";
 
 export const metadata: Metadata = {
   title: {
@@ -17,16 +15,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AdminLayout({
+export default function AdminRootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const requestHeaders = await headers();
-  const host =
-    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-
-  return (
-    <AdminShell basePath={getAdminBasePath(host)}>{children}</AdminShell>
-  );
+  return <AdminPageTransition>{children}</AdminPageTransition>;
 }

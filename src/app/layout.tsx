@@ -3,6 +3,7 @@ import { Montserrat, Outfit } from "next/font/google";
 import type { ReactNode } from "react";
 
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import { getToken } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -21,11 +22,13 @@ export const metadata: Metadata = {
   description: "Manufacturer and exporter of precision brass fittings and engineered components.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const token = await getToken();
+
   return (
     <html
       lang="en"
@@ -36,7 +39,9 @@ export default function RootLayout({
       )}
     >
       <body suppressHydrationWarning>
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider initialToken={token}>
+          {children}
+        </ConvexClientProvider>
       </body>
     </html>
   );

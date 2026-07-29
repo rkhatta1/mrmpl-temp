@@ -20,3 +20,12 @@ export function isAdminHostname(hostHeader: string | null) {
 export function getAdminBasePath(hostHeader: string | null) {
   return isAdminHostname(hostHeader) ? "" : "/admin";
 }
+
+export function getAdminLoginPath(hostHeader: string | null) {
+  const basePath = getAdminBasePath(hostHeader);
+  return basePath ? `${basePath}/login` : "/login";
+}
+
+export function getAdminHomePath(hostHeader: string | null) {
+  return getAdminBasePath(hostHeader) || "/";
+}
