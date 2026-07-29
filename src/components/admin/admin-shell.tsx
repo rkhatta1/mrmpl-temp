@@ -22,7 +22,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -45,52 +44,25 @@ type NavigationItem = {
   title: string;
 };
 
-type NavigationSection = {
-  items: NavigationItem[];
-  label: string;
-};
-
-const navigation: NavigationSection[] = [
+const navigation: NavigationItem[] = [
+  { title: "Overview", href: "/", icon: GaugeIcon },
+  { title: "Products", href: "/products", icon: PackageIcon },
+  { title: "Categories", href: "/categories", icon: FolderOpenIcon },
   {
-    label: "Workspace",
-    items: [{ title: "Overview", href: "/", icon: GaugeIcon }],
+    title: "Subcategories",
+    href: "/subcategories",
+    icon: TreeStructureIcon,
   },
   {
-    label: "Catalog",
-    items: [
-      { title: "Products", href: "/products", icon: PackageIcon },
-      { title: "Categories", href: "/categories", icon: FolderOpenIcon },
-      {
-        title: "Subcategories",
-        href: "/subcategories",
-        icon: TreeStructureIcon,
-      },
-    ],
+    title: "Metal prices",
+    href: "/metal-prices",
+    icon: CurrencyInrIcon,
   },
+  { title: "Enquiries", href: "/enquiries", icon: EnvelopeSimpleIcon },
   {
-    label: "Operations",
-    items: [
-      {
-        title: "Metal prices",
-        href: "/metal-prices",
-        icon: CurrencyInrIcon,
-      },
-      {
-        title: "Enquiries",
-        href: "/enquiries",
-        icon: EnvelopeSimpleIcon,
-      },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      {
-        title: "Site settings",
-        href: "/site-settings",
-        icon: SlidersHorizontalIcon,
-      },
-    ],
+    title: "Site settings",
+    href: "/site-settings",
+    icon: SlidersHorizontalIcon,
   },
 ];
 
@@ -104,13 +76,11 @@ function getHref(basePath: string, href: string) {
 
 function getCurrentSection(segment: string | null) {
   if (!segment) {
-    return navigation[0].items[0];
+    return navigation[0];
   }
 
   return (
-    navigation
-      .flatMap((section) => section.items)
-      .find((item) => item.href === `/${segment}`) ?? navigation[0].items[0]
+    navigation.find((item) => item.href === `/${segment}`) ?? navigation[0]
   );
 }
 
@@ -173,28 +143,25 @@ function AdminSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {navigation.map((section) => (
-          <SidebarGroup key={section.label}>
-            <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      className="in-data-[mobile=true]:h-11"
-                      isActive={activeHref === item.href}
-                      render={<Link href={getHref(basePath, item.href)} />}
-                      tooltip={item.title}
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigation.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    className="in-data-[mobile=true]:h-11"
+                    isActive={activeHref === item.href}
+                    render={<Link href={getHref(basePath, item.href)} />}
+                    tooltip={item.title}
+                  >
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>

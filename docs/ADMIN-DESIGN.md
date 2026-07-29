@@ -40,6 +40,7 @@ The app shell uses the shadcn `Sidebar` component with:
 - shared `SidebarHeader`, `SidebarMenu`, and `SidebarMenuButton` geometry for
   the header and navigation, keeping their controls and icons on one native
   alignment grid in both expanded and collapsed states;
+- a single flat navigation menu without section labels;
 - a left-aligned MRMPL emblem in the sidebar header that fades into the
   sidebar toggle only while its control area is hovered;
 - no workspace header, leaving the content canvas uninterrupted;
@@ -47,12 +48,8 @@ The app shell uses the shadcn `Sidebar` component with:
 - no edge rail or resize-like handle; collapse is controlled from the header;
 - an explicit “Authentication pending” state in the sidebar footer.
 
-Navigation is grouped by operator task:
-
-1. Workspace — Overview
-2. Catalog — Products, Categories, Subcategories
-3. Operations — Metal prices, Enquiries
-4. System — Site settings
+Navigation order: Overview, Products, Categories, Subcategories, Metal prices,
+Enquiries, Site settings.
 
 Every navigation item resolves to a real route. Non-overview routes currently
 show an honest module scaffold and the next design decision required for that
