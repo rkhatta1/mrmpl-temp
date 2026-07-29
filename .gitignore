@@ -46,3 +46,12 @@ next-env.d.ts
 public/optimized/products
 public/home/
 .uploadthing/
+
+# local agent working memory
+/memory/
+
+# deployment data backups
+/backups/
+
+# local Firecrawl documentation cache
+/.firecrawl/
