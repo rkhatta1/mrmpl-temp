@@ -7,19 +7,13 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
+import { getSelectableMetal } from "./lib/metalsDev";
 
 const MAX_METAL_PRICES = 6;
 
-const metalPriceFields = {
-  name: v.string(),
-  symbol: v.string(),
-  price: v.number(),
-};
-
-const metalPriceInput = v.object(metalPriceFields);
-
 const publicMetalPrice = v.object({
   _id: v.id("metalPrices"),
+  apiCode: v.optional(v.string()),
   name: v.string(),
   symbol: v.string(),
   price: v.number(),
@@ -30,77 +24,6 @@ const publicMetalPrice = v.object({
   sortOrder: v.number(),
   updatedAt: v.number(),
 });
-
-type NormalizedMetalPrice = {
-  name: string;
-  symbol: string;
-  price: number;
-};
-
-function normalizeMetalPrice(input: {
-  name: string;
-  symbol: string;
-  price: number;
-}): NormalizedMetalPrice {
-  const name = input.name.trim();
-  const symbol = normalizedSymbol(input.symbol);
-
-  if (!name) {
-    throw new ConvexError("Enter a metal name.");
-  }
-
-  if (!symbol) {
-    throw new ConvexError("Enter a metal symbol.");
-  }
-
-  if (symbol.length > 2) {
-    throw new ConvexError("Metal symbols can contain at most two characters.");
-  }
-
-  if (!Number.isFinite(input.price) || input.price <= 0) {
-    throw new ConvexError("Enter a price greater than zero.");
-  }
-
-  return { name, symbol, price: input.price };
-}
-
-function normalizedName(value: string) {
-  return value.trim().toLocaleLowerCase("en");
-}
-
-function normalizedSymbol(value: string) {
-  return value.trim().toLocaleUpperCase("en");
-}
-
-function roundToTwoDecimalPlaces(value: number) {
-  return Number(value.toFixed(2));
-}
-
-function assertUniqueMetal(
-  prices: Doc<"metalPrices">[],
-  input: NormalizedMetalPrice,
-  currentId?: Id<"metalPrices">,
-) {
-  const duplicateName = prices.find(
-    (price) =>
-      price._id !== currentId &&
-      normalizedName(price.name) === normalizedName(input.name),
-  );
-
-  if (duplicateName) {
-    throw new ConvexError(`${duplicateName.name} is already in the list.`);
-  }
-
-  const duplicateSymbol = prices.find(
-    (price) =>
-      price._id !== currentId &&
-      normalizedSymbol(price.symbol) === input.symbol,
-  );
-
-  if (duplicateSymbol) {
-    throw new ConvexError(`The symbol ${input.symbol} is already in use.`);
-  }
-}
 
 async function requireAdminIdentity(ctx: MutationCtx | QueryCtx) {
   const identity = await ctx.auth.getUserIdentity();
@@ -122,11 +45,12 @@ async function getBoundedMetalPrices(ctx: MutationCtx) {
 function toPublicMetalPrice(price: Doc<"metalPrices">) {
   return {
     _id: price._id,
+    apiCode: price.apiCode,
     name: price.name,
     symbol: price.symbol,
     price: price.price,
     change: price.change,
-    changePercent: roundToTwoDecimalPlaces(price.changePercent),
+    changePercent: Number(price.changePercent.toFixed(2)),
     unit: price.unit,
     currency: price.currency,
     sortOrder: price.sortOrder,
@@ -141,6 +65,65 @@ async function getPublicMetalPrices(ctx: QueryCtx) {
     .take(MAX_METAL_PRICES);
 
   return prices.map(toPublicMetalPrice);
+}
+
+async function getMetalSource(ctx: MutationCtx, apiCode: string) {
+  const catalogueMetal = getSelectableMetal(apiCode);
+  const marketPrice = await ctx.db
+    .query("metalMarketPrices")
+    .withIndex("by_api_code", (q) => q.eq("apiCode", apiCode))
+    .unique();
+
+  if (!catalogueMetal || !marketPrice) {
+    throw new ConvexError("Choose a metal from the synced metals.dev list.");
+  }
+
+  return { catalogueMetal, marketPrice };
+}
+
+function assertUniqueMetal(
+  prices: Doc<"metalPrices">[],
+  apiCode: string,
+  symbol: string,
+  currentId?: Id<"metalPrices">,
+) {
+  const duplicate = prices.find(
+    (price) =>
+      price._id !== currentId &&
+      (price.apiCode === apiCode || price.symbol === symbol),
+  );
+
+  if (duplicate) {
+    throw new ConvexError(`${duplicate.name} is already in the list.`);
+  }
+}
+
+function selectedMetalDocument({
+  catalogueMetal,
+  marketPrice,
+  updatedBy,
+}: {
+  catalogueMetal: {
+    apiCode: string;
+    name: string;
+    symbol: string;
+  };
+  marketPrice: Doc<"metalMarketPrices">;
+  updatedBy: string;
+}) {
+  return {
+    apiCode: catalogueMetal.apiCode,
+    name: catalogueMetal.name,
+    symbol: catalogueMetal.symbol,
+    price: marketPrice.price,
+    change: marketPrice.change,
+    changePercent: Number(marketPrice.changePercent.toFixed(2)),
+    unit: marketPrice.unit,
+    currency: marketPrice.currency,
+    sourceTimestamp: marketPrice.sourceTimestamp,
+    updatedAt: marketPrice.updatedAt,
+    updatedBy,
+  };
 }
 
 export const listPublic = query({
@@ -159,32 +142,35 @@ export const list = query({
 });
 
 export const create = mutation({
-  args: metalPriceInput,
+  args: { apiCode: v.string() },
   returns: v.id("metalPrices"),
   handler: async (ctx, args) => {
     const identity = await requireAdminIdentity(ctx);
-    const prices = await getBoundedMetalPrices(ctx);
+    const [prices, source] = await Promise.all([
+      getBoundedMetalPrices(ctx),
+      getMetalSource(ctx, args.apiCode),
+    ]);
 
     if (prices.length >= MAX_METAL_PRICES) {
       throw new ConvexError("You can add up to six metals.");
     }
 
-    const input = normalizeMetalPrice(args);
-    assertUniqueMetal(prices, input);
+    assertUniqueMetal(
+      prices,
+      source.catalogueMetal.apiCode,
+      source.catalogueMetal.symbol,
+    );
 
     const sortOrder =
       prices.reduce((highest, price) => Math.max(highest, price.sortOrder), 0) +
       1;
 
     return ctx.db.insert("metalPrices", {
-      ...input,
-      change: 0,
-      changePercent: 0,
-      unit: "per ton",
-      currency: "USD",
+      ...selectedMetalDocument({
+        ...source,
+        updatedBy: identity.email ?? identity.subject,
+      }),
       sortOrder,
-      updatedAt: Date.now(),
-      updatedBy: identity.email ?? identity.subject,
     });
   },
 });
@@ -192,7 +178,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     id: v.id("metalPrices"),
-    ...metalPriceFields,
+    apiCode: v.string(),
   },
   returns: v.id("metalPrices"),
   handler: async (ctx, args) => {
@@ -203,30 +189,28 @@ export const update = mutation({
       throw new ConvexError("That metal no longer exists.");
     }
 
-    const prices = await getBoundedMetalPrices(ctx);
-    const input = normalizeMetalPrice(args);
-    assertUniqueMetal(prices, input, args.id);
-
-    if (
-      existing.name === input.name &&
-      existing.symbol === input.symbol &&
-      existing.price === input.price
-    ) {
+    if (existing.apiCode === args.apiCode) {
       return existing._id;
     }
 
-    const change = input.price - existing.price;
-    const changePercent = roundToTwoDecimalPlaces(
-      (change / existing.price) * 100,
+    const [prices, source] = await Promise.all([
+      getBoundedMetalPrices(ctx),
+      getMetalSource(ctx, args.apiCode),
+    ]);
+    assertUniqueMetal(
+      prices,
+      source.catalogueMetal.apiCode,
+      source.catalogueMetal.symbol,
+      args.id,
     );
 
-    await ctx.db.patch(existing._id, {
-      ...input,
-      change,
-      changePercent,
-      updatedAt: Date.now(),
-      updatedBy: identity.email ?? identity.subject,
-    });
+    await ctx.db.patch(
+      existing._id,
+      selectedMetalDocument({
+        ...source,
+        updatedBy: identity.email ?? identity.subject,
+      }),
+    );
 
     return existing._id;
   },

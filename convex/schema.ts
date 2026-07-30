@@ -96,6 +96,7 @@ export default defineSchema({
   }).index("by_key", ["key"]),
 
   metalPrices: defineTable({
+    apiCode: v.optional(v.string()),
     name: v.string(),
     symbol: v.string(),
     price: v.number(),
@@ -106,9 +107,45 @@ export default defineSchema({
     sortOrder: v.number(),
     updatedAt: v.number(),
     updatedBy: v.string(),
+    sourceTimestamp: v.optional(v.number()),
   })
+    .index("by_api_code", ["apiCode"])
     .index("by_symbol", ["symbol"])
     .index("by_sort_order", ["sortOrder"]),
+
+  metalMarketPrices: defineTable({
+    apiCode: v.string(),
+    price: v.number(),
+    change: v.number(),
+    changePercent: v.number(),
+    currency: v.string(),
+    unit: v.string(),
+    sourceTimestamp: v.number(),
+    updatedAt: v.number(),
+  }).index("by_api_code", ["apiCode"]),
+
+  metalApiUsage: defineTable({
+    provider: v.string(),
+    month: v.string(),
+    count: v.number(),
+    limit: v.number(),
+    lastRequestedAt: v.number(),
+  }).index("by_provider_and_month", ["provider", "month"]),
+
+  metalApiSyncState: defineTable({
+    key: v.string(),
+    status: v.union(
+      v.literal("syncing"),
+      v.literal("success"),
+      v.literal("error"),
+    ),
+    totalRequests: v.number(),
+    lastAttemptDay: v.string(),
+    lastAttemptAt: v.number(),
+    lastSuccessAt: v.optional(v.number()),
+    sourceTimestamp: v.optional(v.number()),
+    error: v.optional(v.string()),
+  }).index("by_key", ["key"]),
 
   adminAccessSettings: defineTable({
     key: v.string(),

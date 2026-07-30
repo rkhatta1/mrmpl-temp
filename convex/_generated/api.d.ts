@@ -13,9 +13,12 @@ import type * as auth from "../auth.js";
 import type * as brandTheme from "../brandTheme.js";
 import type * as categories from "../categories.js";
 import type * as contacts from "../contacts.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as lib_accessCodeCrypto from "../lib/accessCodeCrypto.js";
+import type * as lib_metalsDev from "../lib/metalsDev.js";
 import type * as metalPrices from "../metalPrices.js";
+import type * as metalsApi from "../metalsApi.js";
 import type * as products from "../products.js";
 
 import type {
@@ -30,9 +33,12 @@ declare const fullApi: ApiFromModules<{
   brandTheme: typeof brandTheme;
   categories: typeof categories;
   contacts: typeof contacts;
+  crons: typeof crons;
   http: typeof http;
   "lib/accessCodeCrypto": typeof lib_accessCodeCrypto;
+  "lib/metalsDev": typeof lib_metalsDev;
   metalPrices: typeof metalPrices;
+  metalsApi: typeof metalsApi;
   products: typeof products;
 }>;
 
