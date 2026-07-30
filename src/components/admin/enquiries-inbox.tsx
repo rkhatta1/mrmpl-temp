@@ -323,7 +323,6 @@ function EnquiriesInboxView({
   const selectedEnquiry =
     enquiries.find((enquiry) => enquiry._id === selectedId) ?? enquiries[0];
   const isLoadingFirstPage = paginationStatus === "LoadingFirstPage";
-  const hasMore = paginationStatus !== "Exhausted";
 
   return (
     <section className="flex flex-1 flex-col">
@@ -333,16 +332,6 @@ function EnquiriesInboxView({
 
       <div className="mt-5 grid min-h-0 rounded-lg border bg-background lg:grid-cols-[22rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]">
         <div className="min-w-0 border-b lg:border-r lg:border-b-0">
-          <div className="flex h-13 items-center justify-between border-b px-4">
-            <p className="text-sm font-semibold">Inbox</p>
-            {!isLoadingFirstPage ? (
-              <p className="text-xs tabular-nums text-muted-foreground">
-                {enquiries.length}
-                {hasMore ? "+" : ""}
-              </p>
-            ) : null}
-          </div>
-
           <div className="border-b p-2">
             <div className="relative">
               <MagnifyingGlassIcon
