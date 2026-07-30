@@ -1,10 +1,16 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
+import { useQuery } from "convex/react";
 import { TrendingUp, TrendingDown, Minus, DollarSign, Euro, DollarSign as CadIcon } from "lucide-react";
 import { Card, CardContent } from "./ui/Card";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import { getPublicApiBaseUrl } from "@/lib/api-base-url";
+import {
+  readMetalPriceCache,
+  writeMetalPriceCache,
+} from "@/lib/metal-price-cache";
+import { api } from "../../convex/_generated/api";
 
 const METAL_PRICE_PLACEHOLDERS = [
   { name: "", symbol: "", price: 0, change: 0, changePercent: 0, unit: "", loading: true },
@@ -14,9 +20,9 @@ const METAL_PRICE_PLACEHOLDERS = [
 
 const MetalPricesTracker = () => {
   const { elementRef, isVisible } = useScrollAnimation();
-  const [metalPrices, setMetalPrices] = useState([]);
-  const [metalLoading, setMetalLoading] = useState(true);
-  const [metalError, setMetalError] = useState(null);
+  const metalPrices = useQuery(api.metalPrices.listPublic);
+  const metalLoading = metalPrices === undefined;
+  const [cachedMetalPrices, setCachedMetalPrices] = useState([]);
   const [exchangeRates, setExchangeRates] = useState({
     usdToInr: 0,
     eurToInr: 0,
@@ -26,6 +32,18 @@ const MetalPricesTracker = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [currencyLoading, setCurrencyLoading] = useState(true);
   const [currencyError, setCurrencyError] = useState(null);
+
+  useEffect(() => {
+    const cached = readMetalPriceCache();
+    if (!cached?.length) return;
+
+    setCachedMetalPrices(cached);
+    const latest = cached.reduce(
+      (value, metal) => Math.max(value, metal.updatedAt),
+      0,
+    );
+    if (latest) setLastUpdated(new Date(latest));
+  }, []);
 
   // Cache key for localStorage
   const CACHE_KEY = 'currency_rates_cache';
@@ -100,31 +118,6 @@ const MetalPricesTracker = () => {
     });
   };
 
-  const fetchMetalPrices = async () => {
-    try {
-      setMetalLoading(true);
-      setMetalError(null);
-
-      const response = await fetch(`${getPublicApiBaseUrl()}/metal/all`, { cache: "no-store" });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || "Unknown error from backend");
-      }
-
-      setMetalPrices(data.data.metalPrices || []);
-      noteLastUpdated(data.data.updatedAt);
-    } catch (error) {
-      setMetalError(error.message);
-    } finally {
-      setMetalLoading(false);
-    }
-  };
-
   // Fetch currency data from backend API.
   const fetchCurrencyData = async (retryCount = 0, forceRefresh = false) => {
     try {
@@ -194,16 +187,35 @@ const MetalPricesTracker = () => {
     }
   };
 
-  // Initial data fetch - fetchCurrencyData will check cache automatically
   useEffect(() => {
-    fetchMetalPrices();
+    if (metalPrices === undefined) return;
+
+    writeMetalPriceCache(metalPrices);
+    setCachedMetalPrices(metalPrices);
+
+    if (!metalPrices.length) return;
+
+    const latest = metalPrices.reduce(
+      (value, metal) => Math.max(value, metal.updatedAt),
+      0,
+    );
+    if (!latest) return;
+
+    const date = new Date(latest);
+    setLastUpdated((previous) => {
+      if (!previous || date.getTime() > previous.getTime()) return date;
+      return previous;
+    });
+  }, [metalPrices]);
+
+  // Initial currency fetch; Convex keeps metal prices reactive.
+  useEffect(() => {
     fetchCurrencyData();
   }, []);
 
   // Check cache validity periodically (every hour) and refresh if needed
   useEffect(() => {
     const checkInterval = setInterval(() => {
-      fetchMetalPrices();
       if (!isCacheValid()) {
         fetchCurrencyData(0, true); // Force refresh when cache expires
       }
@@ -256,9 +268,11 @@ const MetalPricesTracker = () => {
     }
   ];
 
-  const displayedMetalPrices = metalLoading && metalPrices.length === 0
-    ? METAL_PRICE_PLACEHOLDERS
-    : metalPrices;
+  const displayedMetalPrices = metalLoading
+    ? cachedMetalPrices.length > 0
+      ? cachedMetalPrices
+      : METAL_PRICE_PLACEHOLDERS
+    : metalPrices ?? [];
 
   return (
     <section ref={elementRef} className="py-16 bg-gray-50">
@@ -314,14 +328,6 @@ const MetalPricesTracker = () => {
             </Card>
           ))}
         </div>
-
-        {metalError && !metalLoading && (
-          <div className="text-center mb-4">
-            <div className="inline-flex rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
-              Metal prices are temporarily unavailable.
-            </div>
-          </div>
-        )}
 
         {/* Currency Exchange Rates - Second Row */}
         <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 transition-all duration-700 ${

@@ -2,9 +2,9 @@
 
 ## Status
 
-Barebones foundation implemented. The shell is intentionally ready for
-iteration; authentication, authorization, CRUD workflows, Convex queries, and
-UploadThing uploads are out of scope for this slice.
+The app shell, access-code gate, Better Auth session protection, and the metal
+prices workflow are implemented. Products, categories, enquiries, site media,
+and overview content remain later workflow slices.
 
 ## Purpose
 
@@ -46,14 +46,14 @@ The app shell uses the shadcn `Sidebar` component with:
 - no workspace header, leaving the content canvas uninterrupted;
 - a mobile-only floating opener while the off-canvas sidebar is closed;
 - no edge rail or resize-like handle; collapse is controlled from the header;
-- an explicit “Authentication pending” state in the sidebar footer.
+- the authenticated admin profile and logout control in the sidebar footer.
 
-Navigation order: Overview, Products, Categories, Subcategories, Metal prices,
-Enquiries, Site settings.
+Navigation order: Overview, Products, Categories, Metal prices, Enquiries, Site
+media. Categories and subcategories intentionally share one workflow.
 
-Every navigation item resolves to a real route. Non-overview routes currently
-show an honest module scaffold and the next design decision required for that
-workflow.
+Every navigation item resolves to a real route. Metal prices is functional;
+the remaining non-overview routes show an honest module scaffold and the next
+design decision required for that workflow.
 
 ## Visual foundation
 
@@ -74,8 +74,8 @@ case-only filename collisions without changing the public-site components.
 
 The interface follows a restrained product register. Green communicates active
 or primary state; it is not decorative. Layout uses the Tailwind spacing scale,
-fixed product-UI typography, familiar navigation patterns, and minimal motion
-that only communicates sidebar state.
+fixed product-UI typography, familiar navigation patterns, and short motion
+that communicates navigation and data-state changes.
 
 ## Responsive behavior
 
@@ -83,7 +83,8 @@ that only communicates sidebar state.
 - Mobile: sidebar becomes a modal sheet. Its open state keeps the emblem on the
   left and the close toggle on the right; its closed state exposes a fixed
   44-pixel opener over the content canvas.
-- Content width stays readable while the shell itself fills the viewport.
+- `AdminShell` centrally owns the shared workspace cap (`max-w-5xl`, expanding
+  to `92rem` at `xl`) while page modules remain width-agnostic.
 - The navigation order and labels remain identical at every viewport.
 
 ## Accessibility
@@ -99,21 +100,32 @@ that only communicates sidebar state.
 
 ## Security boundary
 
-This shell has no authentication or authorization yet. A hidden subdomain,
-`robots` metadata, or Proxy rewrite is not a security boundary.
+The access-code gate limits account entry, Better Auth protects the workspace,
+and the admin metal-price query and mutations independently require a Convex
+identity. The separately named `metalPrices.listPublic` query is intentionally
+read-only and unauthenticated because the homepage subscribes to it. A
+dedicated role model is still pending, so future sensitive workflows must add
+server-side role checks rather than treating the route or Proxy rewrite as
+authorization.
 
-Before adding production write operations:
-
-1. authenticate every admin user;
-2. enforce authorization in every Convex query, mutation, and action;
-3. protect UploadThing route handlers and validate ownership;
-4. validate all server actions and route handlers independently of Proxy;
-5. define audit logging for destructive or publishing actions.
+UploadThing handlers must validate authorization and ownership before the site
+media workflow is implemented. Destructive and publishing workflows should
+also define their audit-log requirements.
 
 ## Data and storage boundaries
 
 - Convex remains the source of truth for catalog, pricing, enquiries, and site
-  settings.
+  media metadata.
+- `metalPrices.list` is an authenticated admin query; `listPublic` is the
+  homepage's explicit read-only query. Both are indexed and capped at six
+  records. Create, update, and remove require authentication, perform bounded
+  duplicate checks, and write at most one record per operation.
+- The metal editor accepts at most six rows, normalizes symbols to two uppercase
+  characters, rejects duplicate names or symbols, and publishes saves to the
+  homepage cards through the shared Convex subscription.
+- The homepage keeps a validated 24-hour local-storage warm cache. Convex stays
+  authoritative, overwrites that cache whenever its live query resolves, and
+  successful admin mutations invalidate the cache in the current browser.
 - UploadThing remains the file-storage boundary for future product-media
   workflows.
 - The app shell does not fetch either service. Data contracts belong to each
@@ -121,14 +133,13 @@ Before adding production write operations:
 
 ## Suggested iteration order
 
-1. Authentication and role model
-2. Product list and search
-3. Product create/edit flow with UploadThing imagery
-4. Category and subcategory management
-5. Metal-price management
-6. Enquiry triage
-7. Site settings and publishing controls
-8. Audit log and destructive-action safeguards
+1. Product list and search
+2. Product create/edit flow with UploadThing imagery
+3. Combined category and subcategory management
+4. Enquiry triage
+5. Site media and publishing controls
+6. Overview content
+7. Role enforcement, audit log, and destructive-action safeguards
 
 Each workflow should define its empty, loading, error, success, overflow, and
 permission-denied states before implementation.

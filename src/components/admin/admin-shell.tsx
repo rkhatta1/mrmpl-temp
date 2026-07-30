@@ -5,15 +5,15 @@ import {
   EnvelopeSimpleIcon,
   FolderOpenIcon,
   GaugeIcon,
+  ImagesIcon,
   PackageIcon,
   SidebarIcon,
-  SlidersHorizontalIcon,
-  TreeStructureIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
+import { Toaster } from "react-hot-toast";
 
 import { AdminNavUser } from "@/components/admin/nav-user";
 import {
@@ -49,20 +49,15 @@ const navigation: NavigationItem[] = [
   { title: "Products", href: "/products", icon: PackageIcon },
   { title: "Categories", href: "/categories", icon: FolderOpenIcon },
   {
-    title: "Subcategories",
-    href: "/subcategories",
-    icon: TreeStructureIcon,
-  },
-  {
     title: "Metal prices",
     href: "/metal-prices",
     icon: CurrencyInrIcon,
   },
   { title: "Enquiries", href: "/enquiries", icon: EnvelopeSimpleIcon },
   {
-    title: "Site settings",
-    href: "/site-settings",
-    icon: SlidersHorizontalIcon,
+    title: "Site media",
+    href: "/site-media",
+    icon: ImagesIcon,
   },
 ];
 
@@ -190,6 +185,7 @@ export function AdminShell({ basePath, children }: AdminShellProps) {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      <Toaster position="top-right" />
     </TooltipProvider>
   );
 }

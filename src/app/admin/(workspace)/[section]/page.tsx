@@ -22,20 +22,6 @@ const sections: Record<string, AdminSection> = {
     nextStep:
       "Define ordering, naming constraints, product counts, and safe deletion behavior.",
   },
-  subcategories: {
-    title: "Subcategories",
-    description:
-      "Maintain the catalog hierarchy that connects individual products to categories.",
-    nextStep:
-      "Define parent-category selection, ordering, reassignment, and archive behavior.",
-  },
-  "metal-prices": {
-    title: "Metal prices",
-    description:
-      "Review and maintain the metal-price records consumed by the public experience.",
-    nextStep:
-      "Define supported metals, units, update cadence, validation, and change history.",
-  },
   enquiries: {
     title: "Enquiries",
     description:
@@ -43,12 +29,12 @@ const sections: Record<string, AdminSection> = {
     nextStep:
       "Define statuses, ownership, response notes, retention, and export requirements.",
   },
-  "site-settings": {
-    title: "Site settings",
+  "site-media": {
+    title: "Site media",
     description:
-      "Control shared presentation and configuration values for the public website.",
+      "Manage the shared imagery and media used throughout the public website.",
     nextStep:
-      "Define the editable settings, publishing model, preview behavior, and audit trail.",
+      "Define upload destinations, replacements, previews, and safe deletion behavior.",
   },
 };
 

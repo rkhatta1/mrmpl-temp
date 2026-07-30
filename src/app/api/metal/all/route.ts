@@ -15,7 +15,7 @@ export async function GET() {
   }
 
   try {
-    const metalPrices = await convex.query(api.metalPrices.list, {});
+    const metalPrices = await convex.query(api.metalPrices.listPublic, {});
     const updatedAt = metalPrices.reduce(
       (latest, metal) => Math.max(latest, metal.updatedAt),
       0,
@@ -33,7 +33,10 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Unable to fetch metal prices",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to fetch metal prices",
       },
       { status: 502 },
     );
