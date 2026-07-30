@@ -184,7 +184,9 @@ export function AdminShell({ basePath, children }: AdminShellProps) {
         <SidebarInset>
           <SidebarTrigger className="fixed top-3 left-3 z-30 size-11 bg-background/90 shadow-sm ring-1 ring-border backdrop-blur md:hidden" />
           <div className="flex flex-1 flex-col p-5 pt-20 md:p-7 lg:p-9">
-            {children}
+            <div className="mx-auto flex w-full max-w-5xl xl:max-w-[92rem] flex-1 flex-col">
+              {children}
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>

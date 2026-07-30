@@ -1,6 +1,6 @@
 export default function AdminOverviewPage() {
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
+    <section className="flex flex-1 flex-col">
       <div className="flex max-w-3xl flex-col gap-3">
         <p className="text-sm font-medium text-primary">Workspace foundation</p>
         <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance md:text-3xl">
