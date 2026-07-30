@@ -47,6 +47,8 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     },
     trustedOrigins: [
       siteUrl,
+      "https://mrmpl-temp.vercel.app",
+      "https://www.mayankrawmint.com",
       "http://localhost:3000",
       "http://admin.localhost:3000",
     ],
