@@ -109,10 +109,11 @@ server-side role checks rather than treating the route or Proxy rewrite as
 authorization.
 
 Better Auth's Convex configuration explicitly trusts the deployed origins
-`https://mrmpl-temp.vercel.app` and `https://www.mayankrawmint.com`, alongside
-the configured `SITE_URL` and local development origins. New production or
-preview hostnames must be added to `trustedOrigins` before sign-in requests from
-that origin will pass CSRF validation.
+`https://mrmpl-temp.vercel.app`, `https://www.mayankrawmint.com`, and
+`https://admin.mayankrawmint.com`, alongside the configured `SITE_URL` and local
+development origins. New production or preview hostnames must be added to
+`trustedOrigins` before sign-in requests from that origin will pass CSRF
+validation.
 
 UploadThing handlers must validate authorization and ownership before the site
 media workflow is implemented. Destructive and publishing workflows should
