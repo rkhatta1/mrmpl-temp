@@ -8,7 +8,7 @@ import {
   Upload,
   Video,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { api } from "../../../convex/_generated/api";
@@ -84,6 +84,22 @@ export function SiteMediaManager() {
   const [pendingAsset, setPendingAsset] = useState<SiteMediaAsset | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fileInput = fileInputRef.current;
+    if (!fileInput) return;
+
+    function handleFileSelectionCancelled() {
+      setPendingAsset(null);
+      setUploadProgress(0);
+    }
+
+    fileInput.addEventListener("cancel", handleFileSelectionCancelled);
+    return () => {
+      fileInput.removeEventListener("cancel", handleFileSelectionCancelled);
+    };
+  }, []);
+
   const selectedPage = getSiteMediaPage(selectedPageId);
   const overrides = useQuery(api.siteMedia.listAdminByPage, {
     page: selectedPageId,
