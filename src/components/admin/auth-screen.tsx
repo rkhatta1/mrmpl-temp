@@ -9,7 +9,7 @@ import {
   UserIcon,
 } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
@@ -22,6 +22,10 @@ type AdminAuthScreenProps = {
   homeHref: string;
   onAuthenticated: () => void;
 };
+
+type SubmitState = "idle" | "loading" | "success";
+
+const authSuccessDisplayMs = 650;
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -38,7 +42,8 @@ export function AdminAuthScreen({
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (emailLocked) {
@@ -100,7 +105,7 @@ export function AdminAuthScreen({
       return;
     }
 
-    setPending(true);
+    setSubmitState("loading");
 
     try {
       if (exists) {
@@ -114,6 +119,7 @@ export function AdminAuthScreen({
 
         if (signInError) {
           setError(signInError.message ?? "Unable to sign in.");
+          setSubmitState("idle");
           return;
         }
       } else {
@@ -125,15 +131,19 @@ export function AdminAuthScreen({
 
         if (signUpError) {
           setError(signUpError.message ?? "Unable to create your account.");
+          setSubmitState("idle");
           return;
         }
       }
 
+      setSubmitState("success");
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, authSuccessDisplayMs);
+      });
       onAuthenticated();
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
-      setPending(false);
+      setSubmitState("idle");
     }
   }
 
@@ -315,13 +325,49 @@ export function AdminAuthScreen({
                   >
                     <button
                       type="submit"
-                      disabled={pending}
-                      className={authPrimaryButtonClassName}
+                      disabled={submitState !== "idle"}
+                      aria-busy={submitState === "loading"}
+                      className={cn(
+                        authPrimaryButtonClassName,
+                        submitState === "success"
+                          ? "bg-green-500 text-black hover:bg-green-500 disabled:opacity-100"
+                          : "bg-zinc-950 text-white hover:bg-zinc-800",
+                      )}
                     >
-                      {pending ? (
-                        <SpinnerGapIcon className="size-4 animate-spin" />
-                      ) : null}
-                      {exists ? "Sign In" : "Create Account"}
+                      <AnimatePresence initial={false} mode="wait">
+                        <motion.span
+                          key={submitState}
+                          initial={
+                            reducedMotion
+                              ? { opacity: 0 }
+                              : { opacity: 0, y: 4, filter: "blur(2px)" }
+                          }
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                            filter: "blur(0px)",
+                          }}
+                          exit={
+                            reducedMotion
+                              ? { opacity: 0 }
+                              : { opacity: 0, y: -4, filter: "blur(2px)" }
+                          }
+                          transition={{
+                            duration: reducedMotion ? 0.1 : 0.18,
+                            ease: [0.23, 1, 0.32, 1],
+                          }}
+                          className="inline-flex items-center justify-center gap-2"
+                        >
+                          {submitState === "loading" ? (
+                            <SpinnerGapIcon className="size-4 animate-spin motion-reduce:animate-none" />
+                          ) : null}
+                          {submitState === "success"
+                            ? "Welcome!"
+                            : exists
+                              ? "Sign In"
+                              : "Create Account"}
+                        </motion.span>
+                      </AnimatePresence>
                     </button>
                   </motion.div>
                 ) : null}
@@ -349,4 +395,4 @@ const authFieldClassName =
   "h-12 w-full rounded-lg border border-zinc-200 bg-white pr-3 pl-10 text-left text-sm text-zinc-950 outline-none transition-[border-color,box-shadow] placeholder:text-zinc-400 read-only:bg-zinc-50 focus-visible:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-950/10";
 
 const authPrimaryButtonClassName =
-  "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 text-sm font-semibold text-white transition-[transform,opacity] hover:bg-zinc-800 active:translate-y-px disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-lg text-sm font-semibold transition-[background-color,color,transform,opacity] duration-200 ease-out active:translate-y-px disabled:pointer-events-none disabled:opacity-60 motion-reduce:transition-none";
