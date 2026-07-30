@@ -82,11 +82,15 @@ export default defineSchema({
     email: v.string(),
     companyName: v.string(),
     description: v.string(),
+    searchText: v.optional(v.string()),
     photoUrl: v.union(v.string(), v.null()),
     submittedAt: v.number(),
   })
     .index("by_submitted_at", ["submittedAt"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .searchIndex("search_contacts", {
+      searchField: "searchText",
+    }),
 
   brandThemeSettings: defineTable({
     key: v.string(),

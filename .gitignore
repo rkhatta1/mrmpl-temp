@@ -49,9 +49,11 @@ public/home/
 
 # local agent working memory
 /memory/
+/.handoff/
 
 # deployment data backups
 /backups/
 
 # local Firecrawl documentation cache
 /.firecrawl/
+.tmp-images
