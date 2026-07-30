@@ -3,7 +3,7 @@ import LeadFree from "@/features/site/pages/LeadFree";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="lead-free">
       <LeadFree />
     </SiteShell>
   );

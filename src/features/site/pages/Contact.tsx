@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { motion } from "framer-motion";
 import { useSEO } from "@/hooks/useSEO";
+import SiteMediaImage from "@/components/SiteMediaImage";
 import { 
   Phone, 
   Mail, 
@@ -390,7 +391,7 @@ export default function Contact() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.8 }}
       >
-        <img
+        <SiteMediaImage
           src="/optimized/site/contact-1600.webp"
           alt="Mayank Raw Mint Office"
           className="w-full h-auto object-contain"

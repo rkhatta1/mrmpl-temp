@@ -3,7 +3,7 @@ import BuffoliMachines from "@/features/site/pages/BuffoliMachines";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="buffoli-machines">
       <BuffoliMachines />
     </SiteShell>
   );

@@ -8,6 +8,7 @@ import { useNavigate } from "@/lib/next-router";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import { AspectRatio } from "./ui/AspectRatio";
 import { categoryService } from "../services/categoryService";
+import SiteMediaImage from "@/components/SiteMediaImage";
 
 // Allowed categories to display in home page and footer (order defines display order)
 const ALLOWED_CATEGORIES = [
@@ -177,7 +178,7 @@ const ProductCategoriesSection = () => {
                 {/* Product Image */}
                 <div className="overflow-hidden">
                   <AspectRatio ratio={getHomeCategoryImageRatio(category.name)} className="w-full">
-                    <img 
+                    <SiteMediaImage
                       src={category.image || getHomeCategoryImage(category.name)}
                       alt={category.name}
                       className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"

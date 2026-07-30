@@ -3,7 +3,7 @@ import InHouseManufacturing from "@/features/site/pages/InHouseManufacturing";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="in-house-manufacturing">
       <InHouseManufacturing />
     </SiteShell>
   );

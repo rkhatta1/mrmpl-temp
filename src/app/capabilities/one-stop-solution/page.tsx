@@ -3,7 +3,7 @@ import OneStopSolution from "@/features/site/pages/OneStopSolution";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="one-stop-solution">
       <OneStopSolution />
     </SiteShell>
   );

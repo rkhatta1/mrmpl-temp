@@ -151,6 +151,19 @@ export default defineSchema({
     error: v.optional(v.string()),
   }).index("by_key", ["key"]),
 
+  siteMediaOverrides: defineTable({
+    page: v.string(),
+    assetId: v.string(),
+    url: v.string(),
+    fileKey: v.string(),
+    mimeType: v.string(),
+    width: v.number(),
+    height: v.number(),
+    size: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_page_and_asset_id", ["page", "assetId"]),
+
   adminAccessSettings: defineTable({
     key: v.string(),
     encryptedCode: v.string(),

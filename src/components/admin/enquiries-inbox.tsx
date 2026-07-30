@@ -93,7 +93,7 @@ function EnquiriesListSkeleton({ rows = 5 }: { rows?: number }) {
 function EnquiryDetailSkeleton() {
   return (
     <div
-      className="flex h-[28rem] flex-col gap-8 p-6 md:p-8 lg:h-[42rem] xl:h-[54rem]"
+      className="flex h-[28rem] flex-col gap-8 p-6 md:p-8 lg:h-[42rem]"
       aria-hidden="true"
     >
       <div className="flex items-start gap-4">
@@ -220,7 +220,7 @@ function CopyableContactValue({
 
 function EnquiryDetail({ enquiry }: { enquiry: Enquiry }) {
   return (
-    <article className="flex h-[28rem] flex-col p-6 md:p-8 lg:h-[42rem] xl:h-[54rem]">
+    <article className="flex h-[28rem] flex-col p-6 md:p-8 lg:h-[42rem]">
       <header className="flex items-start gap-4">
         <Avatar className="size-11 shrink-0">
           <AvatarFallback>{getInitials(enquiry.name)}</AvatarFallback>

@@ -3,7 +3,7 @@ import CustomAssembly from "@/features/site/pages/CustomAssembly";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="custom-assembly">
       <CustomAssembly />
     </SiteShell>
   );

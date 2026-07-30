@@ -29,13 +29,6 @@ const sections: Record<string, AdminSection> = {
     nextStep:
       "Define statuses, ownership, response notes, retention, and export requirements.",
   },
-  "site-media": {
-    title: "Site media",
-    description:
-      "Manage the shared imagery and media used throughout the public website.",
-    nextStep:
-      "Define upload destinations, replacements, previews, and safe deletion behavior.",
-  },
 };
 
 type AdminSectionPageProps = {

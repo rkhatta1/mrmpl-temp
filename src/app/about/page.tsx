@@ -3,7 +3,7 @@ import About from "@/features/site/pages/About";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="about">
       <About />
     </SiteShell>
   );

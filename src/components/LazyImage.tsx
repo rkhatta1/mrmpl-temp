@@ -2,6 +2,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useSiteMediaUrl } from "@/contexts/SiteMediaContext";
 
 /**
  * Skeleton placeholder that clearly indicates an image is loading.
@@ -39,23 +40,28 @@ const LazyImage = ({
   onError,
   ...props
 }) => {
-  const [imageSrc, setImageSrc] = useState(eager && src ? src : '');
+  const resolvedSrc = useSiteMediaUrl(src);
+  const resolvedFallbackSrc = useSiteMediaUrl(fallbackSrc);
+  const [imageSrc, setImageSrc] = useState(eager && resolvedSrc ? resolvedSrc : '');
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!src) return;
+    setIsLoaded(false);
+    setHasError(false);
+    setImageSrc(eager && resolvedSrc ? resolvedSrc : '');
+    if (!resolvedSrc) return;
 
     // If eager loading is enabled, load immediately
     if (eager) {
-      setImageSrc(src);
+      setImageSrc(resolvedSrc);
       return;
     }
 
     // Check if IntersectionObserver is supported
     if (typeof IntersectionObserver === 'undefined') {
-      setImageSrc(src);
+      setImageSrc(resolvedSrc);
       return;
     }
 
@@ -67,7 +73,7 @@ const LazyImage = ({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setImageSrc(src);
+            setImageSrc(resolvedSrc);
             observer.disconnect();
           }
         });
@@ -84,16 +90,16 @@ const LazyImage = ({
       observer.unobserve(el);
       observer.disconnect();
     };
-  }, [src, eager]);
+  }, [resolvedSrc, eager]);
 
   const handleLoad = () => {
     setIsLoaded(true);
   };
 
   const handleError = (e) => {
-    if (fallbackSrc && imageSrc !== fallbackSrc) {
+    if (resolvedFallbackSrc && imageSrc !== resolvedFallbackSrc) {
       setIsLoaded(false);
-      setImageSrc(fallbackSrc);
+      setImageSrc(resolvedFallbackSrc);
       return;
     }
 

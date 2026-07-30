@@ -3,7 +3,7 @@ import NSFCertified from "@/features/site/pages/NSFCertified";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="nsf-certified">
       <NSFCertified />
     </SiteShell>
   );

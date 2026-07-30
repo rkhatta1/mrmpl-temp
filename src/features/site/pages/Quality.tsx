@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { AspectRatio } from "@/components/ui/AspectRatio";
 import Header from "@/components/Header";
 import OptimizedImage from "@/components/OptimizedImage";
+import SiteMediaImage from "@/components/SiteMediaImage";
 const isoCertificate = "/optimized/site/quality/c2-1200.webp";
 const nsfCertificate = "/optimized/site/quality/c1-1200.webp";
 
@@ -193,7 +194,7 @@ const Quality = () => {
                   <Card className="h-full hover:shadow-elegant transition-shadow duration-300 border-l-4 border-l-primary overflow-hidden">
                     {/* Process Image */}
                     <div className="aspect-video relative overflow-hidden bg-gray-100">
-                      <img
+                      <SiteMediaImage
                         src={process.image}
                         alt={process.title}
                         className="w-full h-full object-cover"
@@ -324,7 +325,7 @@ const Quality = () => {
               >
                 <Card className="overflow-hidden hover:shadow-elegant transition-shadow duration-300">
                   <div className="aspect-[4/3] relative">
-                    <img
+                    <SiteMediaImage
                       src={cert.image}
                       alt={cert.title}
                       className="w-full h-full object-contain bg-white p-4"
@@ -401,7 +402,7 @@ const Quality = () => {
             >
               <Card className="overflow-hidden hover:shadow-elegant transition-shadow duration-300">
                 <div className="aspect-[4/3] relative">
-                  <img
+                  <SiteMediaImage
                     src="/optimized/site/quality/c1-1200.webp"
                     alt="Quality Testing"
                     className="w-full h-full object-cover"
@@ -419,7 +420,7 @@ const Quality = () => {
             >
               <Card className="overflow-hidden hover:shadow-elegant transition-shadow duration-300">
                 <div className="aspect-[4/3] relative">
-                  <img
+                  <SiteMediaImage
                     src="/optimized/site/quality/c2-1200.webp"
                     alt="Manufacturing Process"
                     className="w-full h-full object-cover"

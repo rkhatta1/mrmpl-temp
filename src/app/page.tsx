@@ -3,7 +3,7 @@ import Home from "@/features/site/pages/Home";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="home">
       <Home />
     </SiteShell>
   );

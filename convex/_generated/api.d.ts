@@ -20,6 +20,7 @@ import type * as lib_metalsDev from "../lib/metalsDev.js";
 import type * as metalPrices from "../metalPrices.js";
 import type * as metalsApi from "../metalsApi.js";
 import type * as products from "../products.js";
+import type * as siteMedia from "../siteMedia.js";
 
 import type {
   ApiFromModules,
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   metalPrices: typeof metalPrices;
   metalsApi: typeof metalsApi;
   products: typeof products;
+  siteMedia: typeof siteMedia;
 }>;
 
 /**

@@ -3,7 +3,7 @@ import Quality from "@/features/site/pages/Quality";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="quality">
       <Quality />
     </SiteShell>
   );

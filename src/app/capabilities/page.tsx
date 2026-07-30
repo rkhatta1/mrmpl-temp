@@ -3,7 +3,7 @@ import Capabilities from "@/features/site/pages/Capabilities";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="capabilities">
       <Capabilities />
     </SiteShell>
   );

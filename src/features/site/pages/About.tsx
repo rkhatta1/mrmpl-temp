@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 import { motion } from "framer-motion";
+import SiteMediaImage from "@/components/SiteMediaImage";
 import { SECTORS } from '@/constants/applications';
 import { useSEO } from "@/hooks/useSEO";
 import {
@@ -107,7 +108,7 @@ const CompanyTimeline = () => {
                   <div className="w-1/2 pr-12 text-right">
                     <div className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                       <div className="aspect-video relative">
-                        <img
+                        <SiteMediaImage
                           src={event.image}
                           alt={event.title}
                           className="w-full h-full object-cover"
@@ -143,7 +144,7 @@ const CompanyTimeline = () => {
                   <div className="w-1/2 pl-12">
                     <div className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                       <div className="aspect-video relative">
-                        <img
+                        <SiteMediaImage
                           src={event.image}
                           alt={event.title}
                           className="w-full h-full object-cover"
@@ -173,7 +174,7 @@ const CompanyTimeline = () => {
               <div className="flex-1">
                 <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                   <div className="aspect-video relative">
-                    <img
+                    <SiteMediaImage
                       src={event.image}
                       alt={event.title}
                       className="w-full h-full object-cover"
@@ -551,7 +552,7 @@ export default function About() {
       >
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">Our Journey</h2>
         <div className="w-full mb-10">
-          <img
+          <SiteMediaImage
             src="/optimized/site/journey-1114.webp"
             alt="Our Journey"
             className="w-full h-auto object-cover"
@@ -567,7 +568,7 @@ export default function About() {
         transition={{ duration: 0.6, delay: 1.7 }}
       >
         <div className="w-full">
-          <img
+          <SiteMediaImage
             src="/optimized/site/about/team-1600.webp"
             alt="Our Team"
             className="w-full h-auto object-cover"
@@ -722,7 +723,7 @@ export default function About() {
               </div>
 
               <div className="w-full">
-                <img
+                <SiteMediaImage
                   src="/optimized/site/csr/edu-1200.webp"
                   alt="Students in classroom"
                   className="w-full h-64 object-cover rounded-lg"
@@ -753,7 +754,7 @@ export default function About() {
               </div>
 
               <div className="w-full">
-                <img
+                <SiteMediaImage
                   src="/optimized/site/csr/health1-1200.webp"
                   alt="Medical care"
                   className="w-full h-64 object-cover rounded-lg"

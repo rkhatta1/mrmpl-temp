@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Link } from "@/lib/next-router";
+import SiteMediaImage from "@/components/SiteMediaImage";
 
 const InHouseManufacturing = () => {
   const { elementRef: heroRef, isVisible: heroVisible } = useScrollAnimation();
@@ -96,7 +97,7 @@ const InHouseManufacturing = () => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   <div className="aspect-[4/3] overflow-hidden">
-                    <img
+                    <SiteMediaImage
                       src={image.src}
                       alt={image.alt}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"

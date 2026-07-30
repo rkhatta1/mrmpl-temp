@@ -3,7 +3,7 @@ import RetailSolutions from "@/features/site/pages/RetailSolutions";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="retail-solutions">
       <RetailSolutions />
     </SiteShell>
   );

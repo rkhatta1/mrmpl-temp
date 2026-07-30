@@ -3,7 +3,7 @@ import CNCMachining from "@/features/site/pages/CNCMachining";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="contract-manufacturing">
       <CNCMachining />
     </SiteShell>
   );

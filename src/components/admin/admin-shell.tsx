@@ -171,15 +171,15 @@ export function AdminShell({ basePath, children }: AdminShellProps) {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
+      <SidebarProvider className="h-svh min-h-0 overflow-hidden">
         <AdminSidebar
           activeHref={activeHref}
           basePath={basePath}
         />
-        <SidebarInset>
+        <SidebarInset className="min-h-0 overflow-hidden">
           <SidebarTrigger className="fixed top-3 left-3 z-30 size-11 bg-background/90 shadow-sm ring-1 ring-border backdrop-blur md:hidden" />
-          <div className="flex flex-1 flex-col p-5 pt-20 md:p-7 lg:p-9">
-            <div className="mx-auto flex w-full max-w-5xl xl:max-w-[92rem] flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5 pt-20 pb-0 md:p-7 md:pb-0 lg:p-9 lg:pb-0">
+            <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col xl:max-w-[92rem]">
               {children}
             </div>
           </div>

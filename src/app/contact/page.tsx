@@ -3,7 +3,7 @@ import Contact from "@/features/site/pages/Contact";
 
 export default function Page() {
   return (
-    <SiteShell>
+    <SiteShell mediaPage="contact">
       <Contact />
     </SiteShell>
   );
