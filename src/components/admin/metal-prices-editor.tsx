@@ -17,7 +17,7 @@ import {
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Button } from "@/components/ui/shadcn-button";
+import { Button } from "@/components/ui/button";
 import {
   Combobox,
   ComboboxContent,

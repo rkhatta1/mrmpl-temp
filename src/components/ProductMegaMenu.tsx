@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/next-router";
 import { Search, Package, Grid3x3, Loader2 } from "lucide-react";
-import { Button } from "./ui/Button";
-import { Input } from "./ui/Input";
+import { Button } from "./ui/legacy-button";
+import { Input } from "./ui/legacy-input";
 import { useCategories } from "../hooks/useCategories";
 
 const ProductMegaMenu = ({ 

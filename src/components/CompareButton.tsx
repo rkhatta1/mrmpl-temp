@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 import React from 'react';
-import { Button } from './ui/Button';
+import { Button } from './ui/legacy-button';
 import { GitCompare, Plus, Check, X } from 'lucide-react';
 import { useCompare } from '../contexts/CompareContext';
 

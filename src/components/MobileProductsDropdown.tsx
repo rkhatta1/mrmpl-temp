@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/next-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/legacy-button";
 import { useCategories } from "../hooks/useCategories";
 
 const MobileProductsDropdown = ({ onClose }) => {

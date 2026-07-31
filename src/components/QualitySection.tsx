@@ -1,8 +1,8 @@
 // @ts-nocheck
 "use client";
-import { Card, CardContent } from "./ui/Card";
-import { Button } from "./ui/Button";
-import { Badge } from "./ui/Badge";
+import { Card, CardContent } from "./ui/legacy-card";
+import { Button } from "./ui/legacy-button";
+import { Badge } from "./ui/legacy-badge";
 import { Microscope, Settings, CheckSquare, FileCheck, Eye, Download } from "lucide-react";
 import { useNavigate } from "@/lib/next-router";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";

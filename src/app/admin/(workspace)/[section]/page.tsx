@@ -8,20 +8,6 @@ type AdminSection = {
 };
 
 const sections: Record<string, AdminSection> = {
-  products: {
-    title: "Products",
-    description:
-      "Manage the product catalog and prepare product imagery for UploadThing-backed workflows.",
-    nextStep:
-      "Define the product list, search, filters, editing states, and image-upload contract.",
-  },
-  categories: {
-    title: "Categories",
-    description:
-      "Organize the top-level catalog structure used throughout the public website.",
-    nextStep:
-      "Define ordering, naming constraints, product counts, and safe deletion behavior.",
-  },
   enquiries: {
     title: "Enquiries",
     description:

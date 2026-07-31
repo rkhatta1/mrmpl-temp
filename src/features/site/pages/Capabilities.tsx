@@ -1,9 +1,9 @@
 // @ts-nocheck
 "use client";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/legacy-button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/legacy-card";
+import { Badge } from "@/components/ui/legacy-badge";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useSEO } from "@/hooks/useSEO";
 import { Link } from "@/lib/next-router";

@@ -2,9 +2,9 @@
 "use client";
 import { useState } from "react";
 import { Search, ArrowRight } from "lucide-react";
-import { Button } from "./ui/Button";
-import { Input } from "./ui/Input";
-import { Badge } from "./ui/Badge";
+import { Button } from "./ui/legacy-button";
+import { Input } from "./ui/legacy-input";
+import { Badge } from "./ui/legacy-badge";
 import { useNavigate } from "@/lib/next-router";
 
 const HeroSection = () => {

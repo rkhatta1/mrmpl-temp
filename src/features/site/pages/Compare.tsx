@@ -2,9 +2,9 @@
 "use client";
 import React from 'react';
 import { useCompare } from '@/contexts/CompareContext';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/legacy-button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/legacy-card';
+import { Badge } from '@/components/ui/legacy-badge';
 import { X, ArrowLeft, Thermometer, Droplets, Wind, Zap, Snowflake, Settings, Ruler, BadgeCheck, Plus } from 'lucide-react';
 import { useNavigate } from '@/lib/next-router';
 import Header from '@/components/Header';

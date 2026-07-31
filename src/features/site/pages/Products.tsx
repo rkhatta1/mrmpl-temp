@@ -2,10 +2,10 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Filter, X, ChevronDown, Home } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/legacy-button";
+import { Input } from "@/components/ui/legacy-input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/legacy-card";
+import { Badge } from "@/components/ui/legacy-badge";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal } from "@/components/ui/Modal";
 import Header from "@/components/Header";

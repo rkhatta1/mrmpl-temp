@@ -39,6 +39,7 @@ export default defineSchema({
   })
     .index("by_external_id", ["externalId"])
     .index("by_category", ["categoryExternalId"])
+    .index("by_category_and_name", ["categoryExternalId", "name"])
     .index("by_name", ["name"]),
 
   products: defineTable({
@@ -47,6 +48,8 @@ export default defineSchema({
     partCode: v.string(),
     category: namedRef,
     subCategory: namedRef,
+    categoryExternalId: v.optional(v.string()),
+    subcategoryExternalId: v.optional(v.string()),
     size: v.string(),
     material: v.string(),
     type: v.string(),
@@ -70,7 +73,9 @@ export default defineSchema({
     .index("by_external_id", ["externalId"])
     .index("by_part_code", ["partCode"])
     .index("by_category", ["category.name"])
+    .index("by_category_external_id", ["categoryExternalId"])
     .index("by_subcategory", ["subCategory.name"])
+    .index("by_subcategory_external_id", ["subcategoryExternalId"])
     .searchIndex("search_products", {
       searchField: "productName",
       filterFields: ["isActive"],

@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect, type CSSProperties } from "react";
 import { FileText, Menu, X, ChevronDown, GitCompare, Search } from "lucide-react";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/legacy-button";
 import { useNavigate } from "@/lib/next-router";
 import ProductMegaMenu from "./ProductMegaMenu";
 import MobileProductsDropdown from "./MobileProductsDropdown";

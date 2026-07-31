@@ -139,6 +139,12 @@ export const seedBatch = mutation({
         partCode: product.partCode,
         category: product.category,
         subCategory: product.subCategory,
+        ...(product.category?._id
+          ? { categoryExternalId: String(product.category._id) }
+          : {}),
+        ...(product.subCategory?._id
+          ? { subcategoryExternalId: String(product.subCategory._id) }
+          : {}),
         size: product.size,
         material: product.material,
         type: product.type,

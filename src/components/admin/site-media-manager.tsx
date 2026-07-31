@@ -15,7 +15,7 @@ import { api } from "../../../convex/_generated/api";
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AspectRatio } from "@/components/ui/shadcn-aspect-ratio";
-import { Button } from "@/components/ui/shadcn-button";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/shadcn-separator";
 import { optimizeSiteMediaImage } from "@/lib/site-media-image";
 import {

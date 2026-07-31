@@ -1,8 +1,8 @@
 // @ts-nocheck
 "use client";
 import { Package, Factory, Globe, Zap, ArrowRight } from "lucide-react";
-import { Card, CardContent } from "./ui/Card";
-import { Button } from "./ui/Button";
+import { Card, CardContent } from "./ui/legacy-card";
+import { Button } from "./ui/legacy-button";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import { useNavigate } from "@/lib/next-router";
 

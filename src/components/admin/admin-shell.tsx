@@ -3,7 +3,6 @@
 import {
   CurrencyInrIcon,
   EnvelopeSimpleIcon,
-  FolderOpenIcon,
   GaugeIcon,
   ImagesIcon,
   PackageIcon,
@@ -47,7 +46,6 @@ type NavigationItem = {
 const navigation: NavigationItem[] = [
   { title: "Overview", href: "/", icon: GaugeIcon },
   { title: "Products", href: "/products", icon: PackageIcon },
-  { title: "Categories", href: "/categories", icon: FolderOpenIcon },
   {
     title: "Metal prices",
     href: "/metal-prices",

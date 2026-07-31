@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { TrendingUp, TrendingDown, Minus, DollarSign, Euro, DollarSign as CadIcon } from "lucide-react";
-import { Card, CardContent } from "./ui/Card";
+import { Card, CardContent } from "./ui/legacy-card";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";
 import { getPublicApiBaseUrl } from "@/lib/api-base-url";
 import {

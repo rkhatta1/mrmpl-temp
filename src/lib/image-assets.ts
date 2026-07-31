@@ -1,4 +1,10 @@
 import priorityProductPartCodes from "../data/priority-product-part-codes.json";
+import {
+  getUploadThingProductImageCustomId,
+  parseProductImageVariantCustomId,
+} from "./product-image-contract";
+
+export { getUploadThingProductImageCustomId } from "./product-image-contract";
 
 export type ProductImageSize = "thumb" | "card" | "large";
 
@@ -6,6 +12,8 @@ const PRODUCT_PART_CODE_PATTERN = /^\d{2}-\d{3}-\d{3}$/;
 const PRODUCT_IMAGE_BASE_URL_ENV = "NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL";
 const LOCAL_PRODUCT_IMAGE_BASE_PATH = "/optimized/products";
 const PRIORITY_PRODUCT_IMAGE_BASE_PATH = "/optimized/priority-products";
+const STORED_PRODUCT_IMAGE_PATTERN =
+  /^\/optimized\/products\/(\d{2}-\d{3}-\d{3})\/(\d{2})-(\d+)\.webp$/i;
 const PRIORITY_PRODUCT_PART_CODES = new Set(priorityProductPartCodes);
 
 function normalizePartCode(partCode: unknown) {
@@ -22,6 +30,58 @@ function getProductImageBaseUrl() {
   const value = process.env[PRODUCT_IMAGE_BASE_URL_ENV]?.trim();
   if (!value) return null;
   return value.replace(/\/+$/, "");
+}
+
+function isUploadThingImageUrl(value: unknown) {
+  if (typeof value !== "string") return false;
+  try {
+    const parsed = new URL(value);
+    return (
+      parsed.protocol === "https:" &&
+      (parsed.hostname === "utfs.io" || parsed.hostname.endsWith(".ufs.sh"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getUploadedProductImageVariantUrl(
+  value: string,
+  index: number,
+  size: ProductImageSize,
+) {
+  if (!isUploadThingImageUrl(value)) return null;
+
+  const parsedUrl = new URL(value);
+  const pathSegments = parsedUrl.pathname.split("/");
+  const currentCustomId = pathSegments.at(-1);
+  const identity = parseProductImageVariantCustomId(currentCustomId);
+  if (!identity) return null;
+
+  const customId = getUploadThingProductImageCustomId(
+    identity.partCode,
+    identity.mediaId,
+    productImageWidth(index, size),
+  );
+  if (!customId) return null;
+
+  pathSegments[pathSegments.length - 1] = customId;
+  parsedUrl.pathname = pathSegments.join("/");
+  return parsedUrl.toString();
+}
+
+function getStoredProductImageUploadThingPath(value: string) {
+  const match = STORED_PRODUCT_IMAGE_PATTERN.exec(value);
+  const remoteBaseUrl = getProductImageBaseUrl();
+  if (!match || !remoteBaseUrl) return null;
+
+  const [, partCode, imageNumber, width] = match;
+  const customId = getUploadThingProductImageCustomId(
+    partCode,
+    imageNumber,
+    width,
+  );
+  return customId ? `${remoteBaseUrl}/${customId}` : null;
 }
 
 function getProductImageDetails(
@@ -65,18 +125,6 @@ export function getUploadThingProductImagePath(
   return `${remoteBaseUrl}/${details.customId}`;
 }
 
-export function getUploadThingProductImageCustomId(
-  partCode: unknown,
-  imageNumber: string,
-  width: string,
-) {
-  const normalizedPartCode = normalizePartCode(partCode);
-  if (!PRODUCT_PART_CODE_PATTERN.test(normalizedPartCode)) return null;
-  if (!/^\d{2}$/.test(imageNumber) || !/^\d+$/.test(width)) return null;
-
-  return `mrmpl-product-${normalizedPartCode}-${imageNumber}-${width}-webp`;
-}
-
 export function getOptimizedProductImagePath(
   partCode: unknown,
   index = 0,
@@ -99,9 +147,24 @@ export function getProductImageFallbackSrc(
   index = 0,
   size: ProductImageSize = "large",
 ) {
-  const primarySrc = getOptimizedProductImagePath(partCode, index, size);
+  const explicitSrc = String(fallbackUrl || "");
+  const uploadedVariantSrc = getUploadedProductImageVariantUrl(
+    explicitSrc,
+    index,
+    size,
+  );
+  if (uploadedVariantSrc) {
+    return uploadedVariantSrc === explicitSrc ? undefined : explicitSrc;
+  }
+  const storedImageSrc = getStoredProductImageUploadThingPath(explicitSrc);
+  const primarySrc =
+    storedImageSrc || getOptimizedProductImagePath(partCode, index, size);
+  if (isUploadThingImageUrl(explicitSrc)) {
+    return primarySrc && primarySrc !== explicitSrc ? primarySrc : undefined;
+  }
+  if (storedImageSrc) return explicitSrc || undefined;
   const remoteSrc = getUploadThingProductImagePath(partCode, index, size);
-  const fallbackSrc = remoteSrc || String(fallbackUrl || "");
+  const fallbackSrc = remoteSrc || explicitSrc;
 
   if (!fallbackSrc || fallbackSrc === primarySrc) return undefined;
   return fallbackSrc;
@@ -125,5 +188,15 @@ export function preferOptimizedProductImage(
   index = 0,
   size: ProductImageSize = "large",
 ) {
-  return getOptimizedProductImagePath(partCode, index, size) || String(fallbackUrl || "");
+  const explicitSrc = String(fallbackUrl || "");
+  const uploadedVariantSrc = getUploadedProductImageVariantUrl(
+    explicitSrc,
+    index,
+    size,
+  );
+  if (uploadedVariantSrc) return uploadedVariantSrc;
+  if (isUploadThingImageUrl(explicitSrc)) return explicitSrc;
+  const storedImageSrc = getStoredProductImageUploadThingPath(explicitSrc);
+  if (storedImageSrc) return storedImageSrc;
+  return getOptimizedProductImagePath(partCode, index, size) || explicitSrc;
 }

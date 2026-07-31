@@ -9,7 +9,7 @@ import QualitySection from "@/components/QualitySection";
 import MetalPricesTracker from "@/components/MetalPricesTracker";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useSEO } from "@/hooks/useSEO";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/legacy-button";
 import { useNavigate } from "@/lib/next-router";
 import { FileText, MessageCircle } from "lucide-react";
 

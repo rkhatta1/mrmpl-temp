@@ -1,8 +1,8 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/Card";
-import { Button } from "./ui/Button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/legacy-card";
+import { Button } from "./ui/legacy-button";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "@/lib/next-router";
 import { useScrollAnimation } from "../hooks/useScrollAnimation";

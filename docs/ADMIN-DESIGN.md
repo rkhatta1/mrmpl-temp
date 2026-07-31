@@ -2,9 +2,9 @@
 
 ## Status
 
-The app shell, access-code gate, Better Auth session protection, and the metal
-prices workflow are implemented. Products, categories, enquiries, site media,
-and overview content remain later workflow slices.
+The app shell, access-code gate, Better Auth session protection, products,
+enquiries, site media, and metal-prices workflows are implemented. Overview
+content remains a later workflow slice.
 
 ## Purpose
 
@@ -48,12 +48,12 @@ The app shell uses the shadcn `Sidebar` component with:
 - no edge rail or resize-like handle; collapse is controlled from the header;
 - the authenticated admin profile and logout control in the sidebar footer.
 
-Navigation order: Overview, Products, Categories, Metal prices, Enquiries, Site
-media. Categories and subcategories intentionally share one workflow.
+Navigation order: Overview, Products, Metal prices, Enquiries, Site media.
+Category, subcategory, and product CRUD intentionally share the Products
+workflow; there is no standalone Categories route.
 
-Every navigation item resolves to a real route. Metal prices is functional;
-the remaining non-overview routes show an honest module scaffold and the next
-design decision required for that workflow.
+Every navigation item resolves to a real route. Only Overview still renders a
+module scaffold.
 
 ## Visual foundation
 
@@ -68,9 +68,9 @@ design decision required for that workflow.
 - radius: Small
 - menu treatment: Default translucent with subtle accents
 
-The repository already had capitalized legacy UI files. The shadcn-generated
-Button, Input, and Separator primitives use `shadcn-*` filenames to prevent
-case-only filename collisions without changing the public-site components.
+The repository's original capitalized public-site primitives now use explicit
+`legacy-*` filenames. Canonical lowercase `button`, `input`, `card`, and
+`badge` files contain the shadcn components used throughout the admin panel.
 
 The interface follows a restrained product register. Green communicates active
 or primary state; it is not decorative. Layout uses the Tailwind spacing scale,
@@ -101,12 +101,11 @@ that communicates navigation and data-state changes.
 ## Security boundary
 
 The access-code gate limits account entry, Better Auth protects the workspace,
-and the admin metal-price query and mutations independently require a Convex
-identity. The separately named `metalPrices.listPublic` query is intentionally
-read-only and unauthenticated because the homepage subscribes to it. A
-dedicated role model is still pending, so future sensitive workflows must add
-server-side role checks rather than treating the route or Proxy rewrite as
-authorization.
+and the admin catalog and metal-price queries and mutations independently
+require a Convex identity. The separately named public queries remain
+read-only and unauthenticated for marketing-site consumers. A dedicated role
+model is still pending, so future sensitive workflows must add server-side
+role checks rather than treating the route or Proxy rewrite as authorization.
 
 Better Auth's Convex configuration explicitly trusts the deployed origins
 `https://mrmpl-temp.vercel.app`, `https://www.mayankrawmint.com`, and
@@ -115,9 +114,10 @@ development origins. New production or preview hostnames must be added to
 `trustedOrigins` before sign-in requests from that origin will pass CSRF
 validation.
 
-UploadThing handlers must validate authorization and ownership before the site
-media workflow is implemented. Destructive and publishing workflows should
-also define their audit-log requirements.
+The `productImage` and site-media UploadThing routes validate the Better Auth
+session before accepting files. Destructive catalog actions require UI
+confirmation and server-side parent/child integrity checks; audit logging is
+still pending.
 
 ## Data and storage boundaries
 
@@ -133,20 +133,37 @@ also define their audit-log requirements.
 - The homepage keeps a validated 24-hour local-storage warm cache. Convex stays
   authoritative, overwrites that cache whenever its live query resolves, and
   successful admin mutations invalidate the cache in the current browser.
-- UploadThing remains the file-storage boundary for future product-media
-  workflows.
+- `catalogAdmin.listCatalog` returns a bounded two-level hierarchy: category,
+  subcategory, then product. The Products page renders that hierarchy as a file
+  tree, keeps ancestors while filtering, and loads full product details only
+  for the selected file.
+- Catalog create, rename, update, move, and delete operations require a Convex
+  identity. Category/subcategory renames cascade into the denormalized product
+  references; parent deletes are refused until their descendants are removed.
+  Migration-safe optional top-level category/subcategory reference fields back
+  these indexes because Convex does not allow indexes through the legacy nested
+  `_id` properties. Existing rows remain readable and are upgraded by normal
+  product edits or branch cascades without requiring an eager production
+  backfill. Imported legacy product references contain category/subcategory
+  names rather than the standalone records' external IDs, so the bounded tree
+  query canonicalizes them with in-memory maps over its existing category and
+  subcategory result sets; selected-product detail uses indexed point lookups.
+- Product images are stored through UploadThing as one logical asset with four
+  responsive WebP variants (480, 768, 880, and 1080). Each variant is capped at
+  50 KiB before upload, and the authenticated route accepts only a complete,
+  consistently identified four-file set. Convex stores the canonical 1080
+  custom-ID URL; the public resolver selects its sibling URL for the requested
+  display size. The ordered URL array defines primary (position 1), secondary
+  (position 2), and remaining media.
 - The app shell does not fetch either service. Data contracts belong to each
   workflow slice, keeping the shell independent from backend loading states.
 
 ## Suggested iteration order
 
-1. Product list and search
-2. Product create/edit flow with UploadThing imagery
-3. Combined category and subcategory management
-4. Enquiry triage
-5. Site media and publishing controls
-6. Overview content
-7. Role enforcement, audit log, and destructive-action safeguards
+1. Overview content
+2. Role enforcement and audit logging
+3. Product-media orphan cleanup and ownership policy
+4. Bulk catalog import/export, if operators require it
 
 Each workflow should define its empty, loading, error, success, overflow, and
 permission-denied states before implementation.

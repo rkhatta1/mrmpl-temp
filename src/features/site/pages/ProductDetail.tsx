@@ -2,10 +2,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from '@/lib/next-router';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/legacy-badge';
+import { Button } from '@/components/ui/legacy-button';
+import { Input } from '@/components/ui/legacy-input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/legacy-card';
 import { Modal } from '@/components/ui/Modal';
 import {
   Thermometer, Wind, Droplets, Zap, Car, Wrench,
