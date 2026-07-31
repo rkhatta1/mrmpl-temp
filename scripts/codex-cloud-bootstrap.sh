@@ -3,10 +3,19 @@
 set -euo pipefail
 
 readonly NODE_VERSION="24"
-REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -n "${CODEX_REPO_ROOT:-}" ]]; then
+  REPO_ROOT="$CODEX_REPO_ROOT"
+else
+  REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
 readonly REPO_ROOT
 readonly LOCAL_BIN="$HOME/.local/bin"
 readonly LOCAL_BIN_PATH_EXPORT="export PATH=\"\$HOME/.local/bin:\$PATH\""
+
+if [[ ! -f "$REPO_ROOT/package.json" ]]; then
+  echo "Codex repository root does not contain package.json: $REPO_ROOT" >&2
+  exit 1
+fi
 
 cd "$REPO_ROOT"
 
