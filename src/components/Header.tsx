@@ -8,6 +8,7 @@ import ProductMegaMenu from "./ProductMegaMenu";
 import MobileProductsDropdown from "./MobileProductsDropdown";
 import { useCompare } from "../contexts/CompareContext";
 
+import LazyImage from "./LazyImage";
 type HeaderProps = {
   logoSrc?: string;
   logoClassName?: string;
@@ -66,10 +67,11 @@ const Header = ({
             className="flex items-center cursor-pointer"
             onClick={() => navigate("/")}
           >
-            <img 
-              src={logoSrc} 
-              alt="Mayank Raw Mint Logo" 
+            <LazyImage
+              alt="Mayank Raw Mint Logo"
+              src={logoSrc}
               className={logoClassName}
+              eager
               style={logoStyle}
             />
           </div>

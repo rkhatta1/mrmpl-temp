@@ -2,6 +2,8 @@
 "use client";
 import { useState } from 'react';
 import LazyImage from './LazyImage';
+import { getProductImageMetadata } from '@/generated/product-image-placeholders';
+import { getSiteImageMetadata } from '@/generated/site-image-placeholders';
 
 /**
  * OptimizedImage component with responsive image support and optimization
@@ -30,6 +32,9 @@ const OptimizedImage = ({
   ...props
 }) => {
   const [imageError, setImageError] = useState(false);
+  const metadata = src?.startsWith('/optimized/priority-products/')
+    ? getProductImageMetadata(src)
+    : getSiteImageMetadata(src);
 
   // Generate srcset for responsive images (if needed in future)
   // For now, we'll use the single src with proper lazy loading
@@ -60,11 +65,14 @@ const OptimizedImage = ({
         <LazyImage
           src={src}
           alt={alt}
+          blurDataURL={metadata?.blurDataURL}
           className={`w-full h-full object-${objectFit}`}
           eager={eager}
+          height={metadata?.height}
           sizes={sizes ? `${sizes.mobile}, (min-width: 768px) ${sizes.tablet}, (min-width: 1024px) ${sizes.desktop}` : undefined}
           onError={handleError}
           {...props}
+          width={metadata?.width}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-100">

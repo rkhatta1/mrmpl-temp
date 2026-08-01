@@ -2,7 +2,8 @@
 
 import type { ImgHTMLAttributes } from "react";
 
-import { useSiteMediaUrl } from "@/contexts/SiteMediaContext";
+import LazyImage from "@/components/LazyImage";
+import { getSiteImageMetadata } from "@/generated/site-image-placeholders";
 
 type SiteMediaImageProps = Omit<
   ImgHTMLAttributes<HTMLImageElement>,
@@ -13,9 +14,21 @@ type SiteMediaImageProps = Omit<
 
 export default function SiteMediaImage({
   alt = "",
+  loading,
   src,
   ...props
 }: SiteMediaImageProps) {
-  const resolvedSrc = useSiteMediaUrl(src);
-  return <img alt={alt} src={resolvedSrc} {...props} />;
+  const metadata = getSiteImageMetadata(src);
+
+  return (
+    <LazyImage
+      alt={alt}
+      blurDataURL={metadata?.blurDataURL}
+      eager={loading === "eager"}
+      height={metadata?.height}
+      src={src}
+      width={metadata?.width}
+      {...props}
+    />
+  );
 }

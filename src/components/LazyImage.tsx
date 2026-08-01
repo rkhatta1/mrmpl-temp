@@ -1,25 +1,40 @@
 // @ts-nocheck
 "use client";
-import { useState, useRef, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect, type ImgHTMLAttributes } from 'react';
 import { useSiteMediaUrl } from "@/contexts/SiteMediaContext";
+import { DEFAULT_IMAGE_PLACEHOLDER } from "@/generated/default-image-placeholder";
+
+type LazyImageProps = ImgHTMLAttributes<HTMLImageElement> & {
+  blurDataURL?: string;
+  eager?: boolean;
+  fallbackSrc?: string;
+  placeholder?: string;
+  src?: string;
+};
 
 /**
  * Skeleton placeholder that clearly indicates an image is loading.
  */
-const ImageSkeleton = ({ className = '' }) => (
+const ImageSkeleton = ({
+  blurDataURL = DEFAULT_IMAGE_PLACEHOLDER,
+  className = '',
+}) => (
   <div
-    className={`absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gray-100 animate-pulse rounded-[inherit] ${className}`}
+    data-image-placeholder=""
+    className={`absolute inset-0 overflow-hidden bg-gray-100 rounded-[inherit] ${className}`}
     aria-hidden="true"
   >
-    <Loader2 className="h-8 w-8 text-gray-300 animate-spin" aria-hidden />
-    <span className="text-xs text-gray-400 font-medium">Loading image…</span>
+    <div
+      className="absolute -inset-1 scale-110 bg-cover bg-center blur-md"
+      style={{ backgroundImage: `url("${blurDataURL}")` }}
+    />
+    <div className="absolute inset-0 animate-pulse bg-white/10" />
   </div>
 );
 
 /**
  * Optimized LazyImage component with lazy loading and error handling.
- * Uses a neutral skeleton placeholder while loading (no logo) for a cleaner look.
+ * Uses a Bun-generated low-quality placeholder while loading.
  * @param {string} src - Image source URL
  * @param {string} alt - Alt text for accessibility
  * @param {string} className - Additional CSS classes
@@ -33,13 +48,15 @@ const LazyImage = ({
   alt = '',
   className = '',
   placeholder = '/optimized/site/logo-86.webp',
-  fallbackSrc,
+  blurDataURL = DEFAULT_IMAGE_PLACEHOLDER,
+  fallbackSrc = undefined,
   eager = false,
-  sizes,
+  sizes = undefined,
   style = {},
-  onError,
+  onLoad = undefined,
+  onError = undefined,
   ...props
-}) => {
+}: LazyImageProps) => {
   const resolvedSrc = useSiteMediaUrl(src);
   const resolvedFallbackSrc = useSiteMediaUrl(fallbackSrc);
   const [imageSrc, setImageSrc] = useState(eager && resolvedSrc ? resolvedSrc : '');
@@ -102,8 +119,11 @@ const LazyImage = ({
     }
   }, [imageSrc]);
 
-  const handleLoad = () => {
+  const handleLoad = (event) => {
     setIsLoaded(true);
+    if (onLoad) {
+      onLoad(event);
+    }
   };
 
   const handleError = (e) => {
@@ -136,11 +156,17 @@ const LazyImage = ({
     );
   }
 
+  const intrinsicWidth = Number(props.width);
+  const intrinsicHeight = Number(props.height);
+  const containerStyle = intrinsicWidth > 0 && intrinsicHeight > 0
+    ? { aspectRatio: `${intrinsicWidth} / ${intrinsicHeight}`, ...style }
+    : style;
+
   return (
-    <div ref={containerRef} className={`relative inline-block ${className}`} style={style}>
+    <div ref={containerRef} className={`relative inline-block ${className}`} style={containerStyle}>
       {/* Skeleton visible until image is loaded */}
-      {!isLoaded && <ImageSkeleton />}
-      {imageSrc ? (
+      {!isLoaded && <ImageSkeleton blurDataURL={blurDataURL} />}
+      {imageSrc && (
         <img
           ref={imageRef}
           src={imageSrc}
@@ -154,8 +180,6 @@ const LazyImage = ({
           onError={handleError}
           {...props}
         />
-      ) : (
-        <ImageSkeleton />
       )}
     </div>
   );

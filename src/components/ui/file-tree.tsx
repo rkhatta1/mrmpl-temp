@@ -204,10 +204,12 @@ function TreeNode({
           }}
         >
           <Icon data-icon="inline-start" />
-          <span className="truncate">{element.name}</span>
+          <span className="min-w-0 flex-1 truncate text-left" title={element.name}>
+            {element.name}
+          </span>
         </Button>
 
-        <div className="pointer-events-none absolute right-0 flex items-center gap-0.5 bg-transparent from-muted via-muted to-transparent pl-4 pr-1 opacity-0 transition-opacity duration-150 group-focus-within/tree-row:pointer-events-auto group-focus-within/tree-row:opacity-100 group-hover/tree-row:pointer-events-auto group-hover/tree-row:opacity-100">
+        <div className="pointer-events-none flex shrink-0 items-center gap-0.5 pr-1 opacity-0 transition-opacity duration-150 group-focus-within/tree-row:pointer-events-auto group-focus-within/tree-row:opacity-100 group-hover/tree-row:pointer-events-auto group-hover/tree-row:opacity-100">
           {onCreate ? (
             <TreeActionButton
               icon={PlusIcon}

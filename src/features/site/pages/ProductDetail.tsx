@@ -22,6 +22,7 @@ import LazyImage from '@/components/LazyImage';
 import { getProductImageFallbackSrc, getProductImageSources, preferOptimizedProductImage } from '@/lib/image-assets';
 import { getPublicApiBaseUrl } from '@/lib/api-base-url';
 
+import { getProductImagePlaceholder } from '@/generated/product-image-placeholders';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -1322,11 +1323,11 @@ const ProductDetail = () => {
                             );
                             return (
                               <div className="aspect-square bg-white p-3 md:p-4 lg:p-6 flex items-center justify-center w-full max-w-full min-w-0 min-h-0">
-                                <img
+                                <LazyImage
                                   src={drawingSrc}
                                   alt={drawingAlt}
-                                  loading="eager"
-                                  decoding="async"
+                                  blurDataURL={getProductImagePlaceholder(drawingSrc)}
+                                  eager
                                   className="filter drop-shadow-sm hover:scale-105 transition-transform duration-300 ease-out max-w-full max-h-full w-auto h-auto object-contain"
                                   style={{ aspectRatio: '1/1' }}
                                 />
@@ -1438,7 +1439,7 @@ const ProductDetail = () => {
                                 )}
                               </div>
 
-                              {/* Assembly Product Drawing - second image is technical drawing, native img to avoid lazy-load issues */}
+                              {/* Assembly Product Drawing - second image is the technical drawing. */}
                               <div className="space-y-4">
                                 <h4 className="text-md font-semibold text-gray-900 text-center">Technical Drawing</h4>
                                 <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -1460,11 +1461,11 @@ const ProductDetail = () => {
                                       );
                                       return (
                                         <div className="aspect-square bg-white p-4 flex items-center justify-center w-full max-w-full min-w-0 min-h-0 mx-auto">
-                                          <img
+                                          <LazyImage
                                             src={src}
                                             alt={alt}
-                                            loading="eager"
-                                            decoding="async"
+                                            blurDataURL={getProductImagePlaceholder(src)}
+                                            eager
                                             className="filter drop-shadow-sm hover:scale-105 transition-transform duration-300 ease-out max-w-full max-h-full w-auto h-auto object-contain"
                                             style={{ aspectRatio: '1/1' }}
                                           />
