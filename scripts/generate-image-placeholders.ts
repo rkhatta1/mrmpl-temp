@@ -1,6 +1,11 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import {
+  createPlaceholder,
+  type GeneratedImageMetadata,
+} from "./image-placeholder";
+
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const PUBLIC_ROOT = path.join(REPO_ROOT, "public");
 const OPTIMIZED_ROOT = path.join(PUBLIC_ROOT, "optimized");
@@ -16,12 +21,6 @@ const RASTER_EXTENSIONS = new Set([
   ".png",
   ".webp",
 ]);
-
-type GeneratedImageMetadata = {
-  blurDataURL: string;
-  height: number;
-  width: number;
-};
 
 async function walkFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -46,19 +45,6 @@ function normalizeProductKey(publicPath: string) {
 function responsiveWidth(filePath: string) {
   const match = path.basename(filePath).match(/-(\d+)(?=\.[^.]+$)/);
   return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
-}
-
-async function createPlaceholder(filePath: string) {
-  const image = Bun.file(filePath).image();
-  const metadata = await image.metadata();
-  const placeholder = await image.placeholder();
-  const placeholderBlob = await (await fetch(placeholder)).blob();
-
-  return {
-    blurDataURL: await placeholderBlob.image().webp({ quality: 20 }).dataurl(),
-    height: metadata.height,
-    width: metadata.width,
-  } satisfies GeneratedImageMetadata;
 }
 
 async function writeGeneratedFile(fileName: string, output: string) {
