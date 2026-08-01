@@ -46,6 +46,7 @@ const LazyImage = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const containerRef = useRef(null);
+  const imageRef = useRef(null);
 
   useEffect(() => {
     setIsLoaded(false);
@@ -92,6 +93,15 @@ const LazyImage = ({
     };
   }, [resolvedSrc, eager]);
 
+  useEffect(() => {
+    const image = imageRef.current;
+
+    // Eager or cached images can finish before React attaches the load handler.
+    if (imageSrc && image?.complete && image.naturalWidth > 0) {
+      setIsLoaded(true);
+    }
+  }, [imageSrc]);
+
   const handleLoad = () => {
     setIsLoaded(true);
   };
@@ -132,6 +142,7 @@ const LazyImage = ({
       {!isLoaded && <ImageSkeleton />}
       {imageSrc ? (
         <img
+          ref={imageRef}
           src={imageSrc}
           alt={alt}
           className={`relative z-10 block ${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
