@@ -14,6 +14,11 @@ export function getSelectableMetal(apiCode: string) {
   return SELECTABLE_METALS.find((metal) => metal.apiCode === apiCode) ?? null;
 }
 
+export function needsMetalPriceSync(storedApiCodes: Iterable<string>) {
+  const storedCodes = new Set(storedApiCodes);
+  return SELECTABLE_METALS.some((metal) => !storedCodes.has(metal.apiCode));
+}
+
 export const METALS_DEV_MONTHLY_LIMIT = 100;
 
 export type MetalRequestDecision =

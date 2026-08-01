@@ -5,6 +5,7 @@ import {
   action,
   internalAction,
   internalMutation,
+  internalQuery,
   query,
   type ActionCtx,
   type MutationCtx,
@@ -14,6 +15,7 @@ import {
   calculateMetalPriceChange,
   getMetalRequestDecision,
   METALS_DEV_MONTHLY_LIMIT,
+  needsMetalPriceSync,
   parseMetalsDevLatest,
   SELECTABLE_METALS,
   type MetalRequestDecision,
@@ -147,6 +149,19 @@ export const getAdminData = query({
         error: state?.error ?? null,
       },
     };
+  },
+});
+
+export const isMarketPriceSyncNeeded = internalQuery({
+  args: {},
+  returns: v.boolean(),
+  handler: async (ctx) => {
+    const marketPrices = await ctx.db
+      .query("metalMarketPrices")
+      .withIndex("by_api_code")
+      .take(SELECTABLE_METAL_COUNT);
+
+    return needsMetalPriceSync(marketPrices.map((market) => market.apiCode));
   },
 });
 
@@ -379,6 +394,14 @@ export const syncNow = action({
   returns: syncResult,
   handler: async (ctx) => {
     await requireAdminIdentity(ctx);
+    const syncNeeded = await ctx.runQuery(
+      internal.metalsApi.isMarketPriceSyncNeeded,
+      {},
+    );
+    if (!syncNeeded) {
+      return { synced: false as const, reason: "prices-complete" };
+    }
+
     return syncMetals(ctx);
   },
 });

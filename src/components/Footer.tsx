@@ -265,6 +265,14 @@ const Footer = () => {
                 <CheckCircle className="h-4 w-4 text-green-300" />
                 ISO 9001:2015
               </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-300" />
+                ISO 14001:2015
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-300" />
+                ISO 45001:2018
+              </span>
               {/* <span className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-green-300" />
                 Lead-Free Specialist

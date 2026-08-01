@@ -4,6 +4,7 @@ import {
   calculateMetalPriceChange,
   getMetalRequestDecision,
   parseMetalsDevLatest,
+  needsMetalPriceSync,
 } from "./metalsDev";
 
 describe("metals.dev latest response", () => {
@@ -103,5 +104,26 @@ describe("stored daily price changes", () => {
       change: 1,
       changePercent: 33.33,
     });
+  });
+});
+
+describe("metals.dev missing-price fallback", () => {
+  test("requests a manual sync only when Convex market rows are incomplete", () => {
+    const completeCatalogue = [
+      "gold",
+      "silver",
+      "platinum",
+      "palladium",
+      "aluminum",
+      "copper",
+      "lead",
+      "nickel",
+      "zinc",
+    ];
+
+    expect(needsMetalPriceSync(completeCatalogue)).toBe(false);
+    expect(
+      needsMetalPriceSync(completeCatalogue.filter((code) => code !== "zinc")),
+    ).toBe(true);
   });
 });

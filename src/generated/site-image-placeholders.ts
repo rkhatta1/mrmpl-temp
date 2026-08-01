@@ -1110,6 +1110,16 @@ const SITE_IMAGE_METADATA: Readonly<Record<string, GeneratedImageMetadata>> = {
     "height": 576,
     "width": 768
   },
+  "/optimized/site/quality/iso-14001-2015-1200.webp": {
+    "blurDataURL": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACQBACdASoXACAAPy2CtlOuqKUisAwB0CWJQBfnA9Iz063WRNuOqMw4B/MoKAAA/kYv0Fb0x0Ip3fUvlnEAqbiKjbKcZyS0SpWSAA==",
+    "height": 1696,
+    "width": 1200
+  },
+  "/optimized/site/quality/iso-45001-2018-1200.webp": {
+    "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADwAwCdASoXACAAPzGCt1OuqKWisAwB0CYJQBh1g3Ri7chsgXdweGVAAP5GL9GStQYMH7AOpAsDKu0XhunN76zbzgymFiuULXFYEFeAAAA=",
+    "height": 1696,
+    "width": 1200
+  },
   "/optimized/site/quality/NDT testing-1079.webp": {
     "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAACwAwCdASogABIAPzmEuFQvKCUjMAgB4CcJZTgADA3ClorymkuSsAD+w7+rwoqRRHp8w7V0YtVIS5u7CNq1u0zC52emHLwAre+m29IwAAA=",
     "height": 642,

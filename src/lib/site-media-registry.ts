@@ -168,6 +168,8 @@ const capabilitiesAssets: SiteMediaAsset[] = [
 const qualityAssets: SiteMediaAsset[] = [
   image("quality", "quality.certificate.iso", "ISO certificate", "/optimized/site/quality/c2-1200.webp", 1200, 1697),
   image("quality", "quality.certificate.nsf", "NSF certificate", "/optimized/site/quality/c1-1200.webp", 1200, 927),
+  image("quality", "quality.certificate.iso-14001", "ISO 14001:2015 certificate", "/optimized/site/quality/iso-14001-2015-1200.webp", 1200, 1696),
+  image("quality", "quality.certificate.iso-45001", "ISO 45001:2018 certificate", "/optimized/site/quality/iso-45001-2018-1200.webp", 1200, 1696),
   image("quality", "quality.incoming-material", "Incoming material verification", "/optimized/site/quality/new/Incoming material verification-1200.webp", 1200, 670),
   image("quality", "quality.first-piece", "First-piece approval", "/optimized/site/quality/new/first piece approval-1200.webp", 1200, 670),
   image("quality", "quality.in-process", "In-process quality", "/optimized/site/quality/In process quality-1200.webp", 1200, 900),

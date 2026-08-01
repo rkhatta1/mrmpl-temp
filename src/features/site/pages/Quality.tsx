@@ -1,6 +1,6 @@
 // @ts-nocheck
 "use client";
-import { Shield, Microscope, Settings, Search, ArrowRight, FileCheck, Download, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Shield, Microscope, Settings, Search, ArrowRight, FileCheck, Download, CheckCircle, ChevronDown, ChevronUp, HardHat, Leaf } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "@/lib/next-router";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -13,13 +13,15 @@ import OptimizedImage from "@/components/OptimizedImage";
 import SiteMediaImage from "@/components/SiteMediaImage";
 const isoCertificate = "/optimized/site/quality/c2-1200.webp";
 const nsfCertificate = "/optimized/site/quality/c1-1200.webp";
+const iso14001Certificate = "/optimized/site/quality/iso-14001-2015-1200.webp";
+const iso45001Certificate = "/optimized/site/quality/iso-45001-2018-1200.webp";
 
 const Quality = () => {
   const navigate = useNavigate();
   
   useSEO(
-    "Quality Testing | ISO & NSF Certified Brass Fittings",
-    "50+ tests and inspections ensure zero-defect fittings. Certified ISO 9001:2015 & NSF for traceable, compliant manufacturing."
+    "Quality Testing | ISO 9001, 14001, 45001 & NSF Certified",
+    "50+ tests and inspections support traceable manufacturing certified to ISO 9001:2015, ISO 14001:2015, ISO 45001:2018, and NSF standards."
   );
   const heroRef = useScrollAnimation({ threshold: 0.2 });
   const processRef = useScrollAnimation({ threshold: 0.3 });
@@ -118,6 +120,20 @@ const Quality = () => {
       issuer: "NSF International",
       description: "Lead-Free brass fittings certification meeting the highest safety and quality standards.",
       icon: CheckCircle
+    },
+    {
+      image: iso14001Certificate,
+      title: "ISO 14001:2015 Certified",
+      issuer: "ECOQUAL CERT LLP",
+      description: "Environmental Management System certification supporting systematic control of environmental impacts, regulatory compliance, and continual improvement.",
+      icon: Leaf
+    },
+    {
+      image: iso45001Certificate,
+      title: "ISO 45001:2018 Certified",
+      issuer: "ECOQUAL CERT LLP",
+      description: "Occupational Health and Safety Management System certification focused on managing workplace hazards, reducing incidents, and improving worker safety.",
+      icon: HardHat
     }
   ];
 
@@ -309,11 +325,11 @@ const Quality = () => {
           >
             <h2 className="text-3xl font-bold text-foreground mb-4">Our Certifications</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Recognized by leading international bodies for our commitment to quality and safety
+              Recognized for our commitment to quality, safety, environmental responsibility, and worker well-being
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {certificates.map((cert, index) => (
               <div
                 key={index}
