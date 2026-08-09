@@ -11,6 +11,7 @@ import {
 
 type ReplaceBody = {
   assetId?: unknown;
+  fileKeys?: unknown;
   fileKey?: unknown;
   height?: unknown;
   mimeType?: unknown;
@@ -35,7 +36,10 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as ReplaceBody;
   } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 },
+    );
   }
 
   if (
@@ -43,13 +47,20 @@ export async function POST(request: Request) {
     !isSiteMediaPageId(body.page) ||
     typeof body.assetId !== "string" ||
     typeof body.fileKey !== "string" ||
+    !Array.isArray(body.fileKeys) ||
+    body.fileKeys.length !== 4 ||
+    body.fileKeys.some((fileKey) => typeof fileKey !== "string" || !fileKey) ||
+    new Set(body.fileKeys).size !== 4 ||
     typeof body.url !== "string" ||
     typeof body.mimeType !== "string" ||
     typeof body.width !== "number" ||
     typeof body.height !== "number" ||
     typeof body.size !== "number"
   ) {
-    return NextResponse.json({ error: "Invalid replacement metadata." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid replacement metadata." },
+      { status: 400 },
+    );
   }
 
   const validationError = validateSiteMediaReplacement({
@@ -67,6 +78,7 @@ export async function POST(request: Request) {
       page: body.page,
       assetId: body.assetId,
       fileKey: body.fileKey,
+      fileKeys: body.fileKeys,
       url: body.url,
       mimeType: body.mimeType,
       width: body.width,
@@ -74,15 +86,16 @@ export async function POST(request: Request) {
       size: body.size,
     });
 
-    if (result.previousFileKey && result.previousFileKey !== body.fileKey) {
-      await utapi.deleteFiles(result.previousFileKey).catch(() => undefined);
+    if (result.previousFileKeys.length > 0) {
+      await utapi.deleteFiles(result.previousFileKeys).catch(() => undefined);
     }
 
     revalidateTag("site-media", { expire: 0 });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    await utapi.deleteFiles(body.fileKey).catch(() => undefined);
-    const message = error instanceof Error ? error.message : "Could not replace the image.";
+    await utapi.deleteFiles(body.fileKeys).catch(() => undefined);
+    const message =
+      error instanceof Error ? error.message : "Could not replace the image.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

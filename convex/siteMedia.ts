@@ -4,11 +4,14 @@ import {
   getSiteMediaAsset,
   validateSiteMediaReplacement,
 } from "../src/lib/site-media-registry";
+import { MAX_SITE_MEDIA_IMAGE_VARIANT_BYTES } from "../src/lib/site-media-image-contract";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 
 const MAX_PAGE_OVERRIDES = 32;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const SITE_MEDIA_VARIANT_COUNT = 4;
+const MAX_IMAGE_BYTES =
+  MAX_SITE_MEDIA_IMAGE_VARIANT_BYTES * SITE_MEDIA_VARIANT_COUNT;
 
 const pageValidator = v.union(
   v.literal("home"),
@@ -39,6 +42,7 @@ const adminOverrideValidator = v.object({
   assetId: v.string(),
   url: v.string(),
   fileKey: v.string(),
+  fileKeys: v.optional(v.array(v.string())),
   mimeType: v.string(),
   width: v.number(),
   height: v.number(),
@@ -71,12 +75,23 @@ function assertUploadThingUrl(value: string) {
 
 function assertImageMetadata(args: {
   fileKey: string;
+  fileKeys: string[];
   height: number;
   size: number;
   width: number;
 }) {
   if (!args.fileKey.trim() || args.fileKey.length > 512) {
     throw new ConvexError("UploadThing returned an invalid file key.");
+  }
+  if (
+    args.fileKeys.length !== SITE_MEDIA_VARIANT_COUNT ||
+    args.fileKeys.some((fileKey) => !fileKey.trim() || fileKey.length > 512) ||
+    new Set(args.fileKeys).size !== SITE_MEDIA_VARIANT_COUNT ||
+    !args.fileKeys.includes(args.fileKey)
+  ) {
+    throw new ConvexError(
+      "UploadThing returned an incomplete site media image set.",
+    );
   }
   if (
     !Number.isFinite(args.width) ||
@@ -88,8 +103,12 @@ function assertImageMetadata(args: {
   ) {
     throw new ConvexError("Image dimensions are invalid.");
   }
-  if (!Number.isFinite(args.size) || args.size <= 0 || args.size > MAX_IMAGE_BYTES) {
-    throw new ConvexError("The optimized image exceeds the 8 MB limit.");
+  if (
+    !Number.isFinite(args.size) ||
+    args.size <= 0 ||
+    args.size > MAX_IMAGE_BYTES
+  ) {
+    throw new ConvexError("The optimized responsive image set exceeds 3.2 MB.");
   }
 }
 
@@ -126,6 +145,7 @@ export const listAdminByPage = query({
       assetId: row.assetId,
       url: row.url,
       fileKey: row.fileKey,
+      fileKeys: row.fileKeys,
       mimeType: row.mimeType,
       width: row.width,
       height: row.height,
@@ -141,12 +161,13 @@ export const replaceImage = mutation({
     assetId: v.string(),
     url: v.string(),
     fileKey: v.string(),
+    fileKeys: v.array(v.string()),
     mimeType: v.string(),
     width: v.number(),
     height: v.number(),
     size: v.number(),
   },
-  returns: v.object({ previousFileKey: v.union(v.string(), v.null()) }),
+  returns: v.object({ previousFileKeys: v.array(v.string()) }),
   handler: async (ctx, args) => {
     const identity = await requireAdminIdentity(ctx);
     const validationError = validateSiteMediaReplacement({
@@ -172,7 +193,7 @@ export const replaceImage = mutation({
       .unique();
 
     if (existing?.fileKey === args.fileKey && existing.url === args.url) {
-      return { previousFileKey: null };
+      return { previousFileKeys: [] };
     }
 
     const next = {
@@ -181,6 +202,7 @@ export const replaceImage = mutation({
       url: args.url,
       fileKey: args.fileKey,
       mimeType: args.mimeType,
+      fileKeys: args.fileKeys,
       width: args.width,
       height: args.height,
       size: args.size,
@@ -194,6 +216,10 @@ export const replaceImage = mutation({
       await ctx.db.insert("siteMediaOverrides", next);
     }
 
-    return { previousFileKey: existing?.fileKey ?? null };
+    return {
+      previousFileKeys: existing
+        ? (existing.fileKeys ?? [existing.fileKey])
+        : [],
+    };
   },
 });

@@ -161,6 +161,7 @@ export default defineSchema({
     assetId: v.string(),
     url: v.string(),
     fileKey: v.string(),
+    fileKeys: v.optional(v.array(v.string())),
     mimeType: v.string(),
     width: v.number(),
     height: v.number(),

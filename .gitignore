@@ -57,3 +57,7 @@ public/home/
 # local Firecrawl documentation cache
 /.firecrawl/
 .tmp-images
+
+# local certificate source documents
+/Mayank 14001 2015 Certificate.pdf
+/Mayank 45001 2018 Certificate.pdf

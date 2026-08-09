@@ -17,7 +17,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AspectRatio } from "@/components/ui/shadcn-aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/shadcn-separator";
-import { optimizeSiteMediaImage } from "@/lib/site-media-image";
+import { optimizeSiteMediaImageVariants } from "@/lib/site-media-image";
+import { createSiteMediaImageMediaId } from "@/lib/site-media-image-contract";
 import {
   getSiteMediaGridPlacement,
   getSiteMediaPage,
@@ -79,8 +80,7 @@ function MediaPreview({
 }
 
 export function SiteMediaManager() {
-  const [selectedPageId, setSelectedPageId] =
-    useState<SiteMediaPageId>("home");
+  const [selectedPageId, setSelectedPageId] = useState<SiteMediaPageId>("home");
   const [pendingAsset, setPendingAsset] = useState<SiteMediaAsset | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -107,9 +107,10 @@ export function SiteMediaManager() {
   const { startUpload, isUploading } = useUploadThing("siteMediaImage", {
     onUploadProgress: setUploadProgress,
   });
+  const mediaBusy = pendingAsset !== null || isUploading;
 
   function chooseReplacement(asset: SiteMediaAsset) {
-    if (!asset.mutable || asset.kind !== "image" || isUploading) return;
+    if (!asset.mutable || asset.kind !== "image" || mediaBusy) return;
     setPendingAsset(asset);
     fileInputRef.current?.click();
   }
@@ -119,23 +120,44 @@ export function SiteMediaManager() {
       throw new Error("Choose an image file for this image placement.");
     }
 
-    const optimized = await optimizeSiteMediaImage(file);
-    const uploadedFiles = await startUpload([optimized.file]);
-    const uploaded = uploadedFiles?.[0];
-    if (!uploaded?.serverData) {
-      throw new Error("The image upload did not finish.");
+    const variants = await optimizeSiteMediaImageVariants(file, {
+      mediaId: createSiteMediaImageMediaId(),
+    });
+    const uploadedFiles = await startUpload(
+      variants.map((variant) => variant.file),
+    );
+    const uploaded =
+      uploadedFiles?.flatMap((uploadedFile) =>
+        uploadedFile.serverData ? [uploadedFile.serverData] : [],
+      ) ?? [];
+    const canonicalVariant = variants.find(
+      (variant) => variant.targetWidth === 1080,
+    );
+    const canonicalUpload = uploaded.find((serverData) =>
+      serverData.customId?.endsWith("-1080-webp"),
+    );
+    if (
+      uploaded.length !== variants.length ||
+      !canonicalVariant ||
+      !canonicalUpload?.url
+    ) {
+      throw new Error("The responsive image upload did not finish.");
     }
 
     const response = await fetch("/api/admin/site-media/replace", {
       body: JSON.stringify({
         assetId: asset.id,
-        fileKey: uploaded.serverData.fileKey,
-        height: optimized.height,
-        mimeType: uploaded.serverData.mimeType,
+        fileKey: canonicalUpload.fileKey,
+        fileKeys: uploaded.map((serverData) => serverData.fileKey),
+        height: canonicalVariant.height,
+        mimeType: canonicalUpload.mimeType,
         page: asset.pageId,
-        size: uploaded.serverData.size,
-        url: uploaded.serverData.url,
-        width: optimized.width,
+        size: uploaded.reduce(
+          (total, serverData) => total + serverData.size,
+          0,
+        ),
+        url: canonicalUpload.url,
+        width: canonicalVariant.width,
       }),
       headers: { "content-type": "application/json" },
       method: "POST",
@@ -156,7 +178,7 @@ export function SiteMediaManager() {
 
     try {
       await replaceImage(file, asset);
-      toast.success(`${asset.label} updated.`);
+      toast.success(`${asset.label} updated with four responsive variants.`);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not replace the image.",
@@ -176,8 +198,9 @@ export function SiteMediaManager() {
           Site media
         </h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Replace images used across the static website. Videos are shown for
-          context and remain read-only.
+          Replace images used across the static website. Each image becomes 480,
+          768, 880, and 1080px WebP variants capped at 800 KB before upload.
+          Videos remain read-only.
         </p>
       </div>
 
@@ -279,7 +302,7 @@ export function SiteMediaManager() {
 
                         {asset.mutable && asset.kind === "image" ? (
                           <Button
-                            disabled={isUploading}
+                            disabled={mediaBusy}
                             onClick={() => chooseReplacement(asset)}
                             size="sm"
                             type="button"
