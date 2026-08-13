@@ -262,14 +262,15 @@ const Quality = () => {
 
             {/* Process Flow PDF Button */}
             <div className="mt-12 flex justify-center text-white">
-              <Button
-                onClick={() => window.open('/quality/Process Flow MRM.pdf', '_blank')}
-                size="lg"
-                className="shadow-elegant hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+              <a
+                href="/Process%20Flow.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shadow-elegant hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
               >
                 <FileCheck className="h-4 w-4 mr-2" />
                 View Process Flow
-              </Button>
+              </a>
             </div>
           </div>
         </div>

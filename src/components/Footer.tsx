@@ -155,7 +155,7 @@ const Footer = () => {
               <ul className="space-y-4">
                 <li>
                   <a
-                    href={`/legal/${encodeURIComponent("MRM Terms & Conditions.pdf")}`}
+                    href={`/${encodeURIComponent("MRM Terms & Conditions.pdf")}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-green-100 hover:text-white transition-colors"
@@ -165,7 +165,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <a
-                    href={`/legal/${encodeURIComponent("MRM Legal Disclaimer.pdf")}`}
+                    href={`/${encodeURIComponent("MRM Legal Disclaimer.pdf")}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-green-100 hover:text-white transition-colors"
@@ -175,7 +175,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <a
-                    href={`/legal/${encodeURIComponent("MRM Privacy Policy.pdf")}`}
+                    href={`/${encodeURIComponent("MRM Privacy Policy.pdf")}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-green-100 hover:text-white transition-colors"
@@ -252,7 +252,7 @@ const Footer = () => {
         {/* Bottom Bar - Separated by horizontal line */}
         <div className="border-t border-green-600/30 pt-8">
           <div className="text-sm text-white text-center flex flex-wrap justify-center items-center gap-4">
-            <span>© 2025 Mayank Raw Mint. All rights reserved.</span>
+            <span>© 2026 Mayank Raw Mint. All rights reserved.</span>
             <span className="hidden sm:inline">|</span>
             <span>Est. 2008</span>
             <span className="hidden sm:inline">|</span>
