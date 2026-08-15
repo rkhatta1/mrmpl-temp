@@ -16,6 +16,7 @@ import {
   ProductEditor,
   SubcategoryEditor,
 } from "@/components/admin/catalog-editors";
+import { BulkProductUploadDialog } from "@/components/admin/bulk-product-upload-dialog";
 import {
   CatalogDeleteDialog,
   CatalogMutationDialog,
@@ -318,14 +319,17 @@ export function ProductsManager() {
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden pb-0">
-      <div className="max-w-3xl">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-          Products
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Manage categories, subcategories, product information, and product
-          imagery from one catalog workspace.
-        </p>
+      <div className="flex shrink-0 items-start justify-between gap-4">
+        <div className="max-w-3xl">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+            Products
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Manage categories, subcategories, product information, and product
+            imagery from one catalog workspace.
+          </p>
+        </div>
+        <BulkProductUploadDialog catalog={catalog} />
       </div>
 
       <div className="mt-8 grid min-h-0 min-w-0 flex-1 grid-rows-[18rem_auto_minmax(0,1fr)] gap-5 lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-1 lg:gap-9">
