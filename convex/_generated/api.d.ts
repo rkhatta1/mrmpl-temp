@@ -12,6 +12,7 @@ import type * as adminAccess from "../adminAccess.js";
 import type * as auth from "../auth.js";
 import type * as brandTheme from "../brandTheme.js";
 import type * as catalogAdmin from "../catalogAdmin.js";
+import type * as catalogImport from "../catalogImport.js";
 import type * as categories from "../categories.js";
 import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   brandTheme: typeof brandTheme;
   catalogAdmin: typeof catalogAdmin;
+  catalogImport: typeof catalogImport;
   categories: typeof categories;
   contacts: typeof contacts;
   crons: typeof crons;
