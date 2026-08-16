@@ -3,6 +3,11 @@ import {
   getProductImageVariantDescriptors,
   type ProductImageVariantDescriptor,
 } from "./product-image-contract";
+import {
+  MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES,
+  getBulkProductPhotoVariantDescriptors,
+  type BulkProductPhotoVariantDescriptor,
+} from "./bulk-product-photo-contract";
 export type ResponsiveImageVariantDescriptor = {
   fileName: string;
   height: number;
@@ -31,6 +36,9 @@ export type OptimizedProductImageVariant = ProductImageVariantDescriptor & {
   file: File;
 };
 
+export type OptimizedBulkProductPhotoVariant =
+  BulkProductPhotoVariantDescriptor & { file: File };
+
 function canvasToWebp(canvas: HTMLCanvasElement, quality: number) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -45,6 +53,9 @@ function canvasToWebp(canvas: HTMLCanvasElement, quality: number) {
 }
 
 async function encodeWithinLimit(canvas: HTMLCanvasElement, maxBytes: number) {
+  const highestQuality = await canvasToWebp(canvas, MAX_WEBP_QUALITY);
+  if (highestQuality.size <= maxBytes) return highestQuality;
+
   let lowerQuality = MIN_WEBP_QUALITY;
   let upperQuality = MAX_WEBP_QUALITY;
   let best = await canvasToWebp(canvas, lowerQuality);
@@ -170,5 +181,16 @@ export async function optimizeProductImageVariants(
         width,
       }),
     maxBytes: MAX_PRODUCT_IMAGE_VARIANT_BYTES,
+  });
+}
+
+export async function optimizeBulkProductPhotoVariants(
+  file: File,
+  { contentHash }: { contentHash: string },
+) {
+  return optimizeResponsiveImageVariants(file, {
+    getDescriptors: ({ height, width }) =>
+      getBulkProductPhotoVariantDescriptors({ contentHash, height, width }),
+    maxBytes: MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES,
   });
 }

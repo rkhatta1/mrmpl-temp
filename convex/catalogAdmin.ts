@@ -121,6 +121,10 @@ function optionalText(value: string, label: string, maxLength: number) {
   return normalized;
 }
 
+function normalizeCatalogKey(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
 function textList(values: string[], label: string, maxItems: number) {
   if (values.length > maxItems) {
     throw new ConvexError(label + " can contain at most " + maxItems + " items.");
@@ -319,6 +323,7 @@ function storedProduct(
   return {
     productName: product.productName,
     partCode: product.partCode,
+    normalizedPartCode: normalizeCatalogKey(product.partCode),
     category: { _id: category.externalId, name: category.name },
     subCategory: { _id: subcategory.externalId, name: subcategory.name },
     categoryExternalId: category.externalId,
@@ -483,7 +488,12 @@ export const createCategory = mutation({
     if (duplicate) throw new ConvexError("A category with this name already exists.");
 
     const externalId = crypto.randomUUID();
-    await ctx.db.insert("categories", { externalId, name, description });
+    await ctx.db.insert("categories", {
+      externalId,
+      name,
+      normalizedName: normalizeCatalogKey(name),
+      description,
+    });
     return { externalId };
   },
 });
@@ -523,7 +533,11 @@ export const updateCategory = mutation({
         });
       }
     }
-    await ctx.db.patch(category._id, { name, description });
+    await ctx.db.patch(category._id, {
+      name,
+      normalizedName: normalizeCatalogKey(name),
+      description,
+    });
     return null;
   },
 });
@@ -581,6 +595,7 @@ export const createSubcategory = mutation({
     await ctx.db.insert("subcategories", {
       externalId,
       name,
+      normalizedName: normalizeCatalogKey(name),
       categoryExternalId: category.externalId,
     });
     return { externalId };
@@ -631,6 +646,7 @@ export const updateSubcategory = mutation({
 
     await ctx.db.patch(subcategory._id, {
       name,
+      normalizedName: normalizeCatalogKey(name),
       categoryExternalId: category.externalId,
     });
     return null;
