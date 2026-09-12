@@ -10,9 +10,9 @@ describe("product image assets", () => {
   test("prefers admin-uploaded UploadThing images over generated legacy paths", () => {
     const uploaded = "https://abc123.ufs.sh/f/product-image";
 
-    expect(preferOptimizedProductImage(uploaded, "12-345-678", 0, "large")).toBe(
-      uploaded,
-    );
+    expect(
+      preferOptimizedProductImage(uploaded, "12-345-678", 0, "large"),
+    ).toBe(uploaded);
     expect(getProductImageFallbackSrc(uploaded, "12-345-678", 0, "large")).toBe(
       "/optimized/products/12-345-678/01-1080.webp",
     );
@@ -22,14 +22,35 @@ describe("product image assets", () => {
     const uploaded =
       "https://abc123.ufs.sh/f/mrmpl-product-11-375-002-abc123def456-1080-webp";
 
-    expect(preferOptimizedProductImage(uploaded, "11-375-002", 0, "thumb")).toBe(
+    expect(
+      preferOptimizedProductImage(uploaded, "11-375-002", 0, "thumb"),
+    ).toBe(
       "https://abc123.ufs.sh/f/mrmpl-product-11-375-002-abc123def456-480-webp",
     );
     expect(preferOptimizedProductImage(uploaded, "11-375-002", 0, "card")).toBe(
       "https://abc123.ufs.sh/f/mrmpl-product-11-375-002-abc123def456-768-webp",
     );
-    expect(preferOptimizedProductImage(uploaded, "11-375-002", 1, "large")).toBe(
+    expect(
+      preferOptimizedProductImage(uploaded, "11-375-002", 1, "large"),
+    ).toBe(
       "https://abc123.ufs.sh/f/mrmpl-product-11-375-002-abc123def456-880-webp",
+    );
+  });
+
+  test("selects responsive variants for bulk-imported product photos", () => {
+    const hash = "a".repeat(64);
+    const jobExternalId = "12345678-1234-4234-8234-123456789abc";
+    const uploaded = `https://abc123.ufs.sh/f/mrmpl-bulk-product-photo-${hash}-1080-webp`;
+    const scoped = `https://abc123.ufs.sh/f/mrmpl-bulk-${jobExternalId}-${hash}-1080-webp`;
+
+    expect(preferOptimizedProductImage(uploaded, "BULK-001", 0, "thumb")).toBe(
+      `https://abc123.ufs.sh/f/mrmpl-bulk-product-photo-${hash}-480-webp`,
+    );
+    expect(preferOptimizedProductImage(uploaded, "BULK-001", 0, "card")).toBe(
+      `https://abc123.ufs.sh/f/mrmpl-bulk-product-photo-${hash}-768-webp`,
+    );
+    expect(preferOptimizedProductImage(scoped, "BULK-001", 0, "card")).toBe(
+      `https://abc123.ufs.sh/f/mrmpl-bulk-${jobExternalId}-${hash}-768-webp`,
     );
   });
 
@@ -47,7 +68,8 @@ describe("product image assets", () => {
 
   test("resolves UploadThing CDN paths when a product image base URL is configured", () => {
     const originalBaseUrl = process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL;
-    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL = "https://example.ufs.sh/f/";
+    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL =
+      "https://example.ufs.sh/f/";
 
     try {
       expect(getOptimizedProductImagePath("06-279-001", 0, "card")).toBe(
@@ -60,7 +82,8 @@ describe("product image assets", () => {
 
   test("preserves a stored legacy image's identity when its display order changes", () => {
     const originalBaseUrl = process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL;
-    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL = "https://example.ufs.sh/f/";
+    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL =
+      "https://example.ufs.sh/f/";
 
     try {
       expect(
@@ -70,9 +93,7 @@ describe("product image assets", () => {
           0,
           "large",
         ),
-      ).toBe(
-        "https://example.ufs.sh/f/mrmpl-product-11-375-002-02-880-webp",
-      );
+      ).toBe("https://example.ufs.sh/f/mrmpl-product-11-375-002-02-880-webp");
     } finally {
       process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL = originalBaseUrl;
     }
@@ -80,7 +101,8 @@ describe("product image assets", () => {
 
   test("keeps the matching stored legacy path as the CDN image fallback", () => {
     const originalBaseUrl = process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL;
-    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL = "https://example.ufs.sh/f/";
+    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL =
+      "https://example.ufs.sh/f/";
     const stored = "/optimized/products/11-375-002/02-880.webp";
 
     try {
@@ -94,15 +116,21 @@ describe("product image assets", () => {
 
   test("keeps priority product images local and uses UploadThing as fallback", () => {
     const originalBaseUrl = process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL;
-    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL = "https://example.ufs.sh/f/";
+    process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL =
+      "https://example.ufs.sh/f/";
 
     try {
       expect(getOptimizedProductImagePath("01-001-001", 0, "card")).toBe(
         "/optimized/priority-products/01-001-001/01-768.webp",
       );
-      expect(getProductImageFallbackSrc("/remote/product.jpg", "01-001-001", 0, "card")).toBe(
-        "https://example.ufs.sh/f/mrmpl-product-01-001-001-01-768-webp",
-      );
+      expect(
+        getProductImageFallbackSrc(
+          "/remote/product.jpg",
+          "01-001-001",
+          0,
+          "card",
+        ),
+      ).toBe("https://example.ufs.sh/f/mrmpl-product-01-001-001-01-768-webp");
     } finally {
       process.env.NEXT_PUBLIC_PRODUCT_IMAGE_BASE_URL = originalBaseUrl;
     }
@@ -115,8 +143,8 @@ describe("product image assets", () => {
   });
 
   test("keeps the source URL when a part code does not match optimized product folders", () => {
-    expect(preferOptimizedProductImage("/remote/product.jpg", "700702", 0, "card")).toBe(
-      "/remote/product.jpg",
-    );
+    expect(
+      preferOptimizedProductImage("/remote/product.jpg", "700702", 0, "card"),
+    ).toBe("/remote/product.jpg");
   });
 });

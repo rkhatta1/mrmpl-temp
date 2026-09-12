@@ -1,5 +1,9 @@
 import priorityProductPartCodes from "../data/priority-product-part-codes.json";
 import {
+  getBulkProductPhotoSiblingCustomId,
+  parseBulkProductPhotoCustomId,
+} from "./bulk-product-photo-contract";
+import {
   getUploadThingProductImageCustomId,
   parseProductImageVariantCustomId,
 } from "./product-image-contract";
@@ -17,7 +21,9 @@ const STORED_PRODUCT_IMAGE_PATTERN =
 const PRIORITY_PRODUCT_PART_CODES = new Set(priorityProductPartCodes);
 
 function normalizePartCode(partCode: unknown) {
-  return String(partCode || "").trim().toLowerCase();
+  return String(partCode || "")
+    .trim()
+    .toLowerCase();
 }
 
 function productImageWidth(index: number, size: ProductImageSize) {
@@ -55,6 +61,17 @@ function getUploadedProductImageVariantUrl(
   const parsedUrl = new URL(value);
   const pathSegments = parsedUrl.pathname.split("/");
   const currentCustomId = pathSegments.at(-1);
+  const bulkIdentity = parseBulkProductPhotoCustomId(currentCustomId);
+  if (bulkIdentity) {
+    const customId = getBulkProductPhotoSiblingCustomId(
+      bulkIdentity.customId,
+      productImageWidth(index, size),
+    );
+    if (!customId) return null;
+    pathSegments[pathSegments.length - 1] = customId;
+    parsedUrl.pathname = pathSegments.join("/");
+    return parsedUrl.toString();
+  }
   const identity = parseProductImageVariantCustomId(currentCustomId);
   if (!identity) return null;
 
@@ -94,7 +111,11 @@ function getProductImageDetails(
 
   const imageNumber = String(index + 1).padStart(2, "0");
   const width = productImageWidth(index, size);
-  const customId = getUploadThingProductImageCustomId(normalizedPartCode, imageNumber, width);
+  const customId = getUploadThingProductImageCustomId(
+    normalizedPartCode,
+    imageNumber,
+    width,
+  );
   if (!customId) return null;
 
   return {
@@ -105,7 +126,11 @@ function getProductImageDetails(
   };
 }
 
-function getLocalProductImagePath(partCode: string, imageNumber: string, width: string) {
+function getLocalProductImagePath(
+  partCode: string,
+  imageNumber: string,
+  width: string,
+) {
   const basePath = PRIORITY_PRODUCT_PART_CODES.has(partCode)
     ? PRIORITY_PRODUCT_IMAGE_BASE_PATH
     : LOCAL_PRODUCT_IMAGE_BASE_PATH;
@@ -134,11 +159,19 @@ export function getOptimizedProductImagePath(
   if (!details) return null;
 
   if (!PRIORITY_PRODUCT_PART_CODES.has(details.normalizedPartCode)) {
-    const remotePath = getUploadThingProductImagePath(details.normalizedPartCode, index, size);
+    const remotePath = getUploadThingProductImagePath(
+      details.normalizedPartCode,
+      index,
+      size,
+    );
     if (remotePath) return remotePath;
   }
 
-  return getLocalProductImagePath(details.normalizedPartCode, details.imageNumber, details.width);
+  return getLocalProductImagePath(
+    details.normalizedPartCode,
+    details.imageNumber,
+    details.width,
+  );
 }
 
 export function getProductImageFallbackSrc(

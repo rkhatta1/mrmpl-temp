@@ -1,7 +1,13 @@
 import { UploadThingError, UTFiles } from "uploadthing/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 
-import { isAuthenticated } from "@/lib/auth-server";
+import { api } from "@/lib/convex-server";
+import { fetchAuthQuery, isAuthenticated } from "@/lib/auth-server";
+import {
+  MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES,
+  getBulkProductPhotoVariantUrl,
+  parseBulkProductPhotoUploadBatch,
+} from "@/lib/bulk-product-photo-contract";
 import {
   MAX_PRODUCT_IMAGE_VARIANT_BYTES,
   getProductImageVariantUrl,
@@ -20,6 +26,59 @@ const PRODUCT_IMAGE_MAX_FILE_SIZE = "50KB" as "64KB";
 const SITE_MEDIA_IMAGE_MAX_FILE_SIZE = "800KB" as "1MB";
 
 export const siteMediaFileRouter = {
+  bulkProductPhoto: f({
+    image: {
+      maxFileCount: 40,
+      maxFileSize: PRODUCT_IMAGE_MAX_FILE_SIZE,
+      minFileCount: 4,
+    },
+  })
+    .middleware(async ({ files }) => {
+      if (!(await isAuthenticated())) {
+        throw new UploadThingError("Unauthorized");
+      }
+      if (
+        files.some((file) => file.size > MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES)
+      ) {
+        throw new UploadThingError(
+          "Each bulk product photo variant must be 50 KB or smaller.",
+        );
+      }
+      const uploadBatch = parseBulkProductPhotoUploadBatch(
+        files.map((file) => file.name),
+      );
+      if (!uploadBatch) {
+        throw new UploadThingError(
+          "Upload complete 480, 768, 880, and 1080 bulk product photo sets.",
+        );
+      }
+      await fetchAuthQuery(api.catalogImport.authorizePhotoUpload, {
+        contentHashes: uploadBatch.contentHashes,
+        jobExternalId: uploadBatch.jobExternalId,
+      });
+      return {
+        [UTFiles]: files.map((file, index) => ({
+          ...file,
+          customId: uploadBatch.customIds[index],
+        })),
+      };
+    })
+    .onUploadComplete(async ({ file }) => {
+      const url = getBulkProductPhotoVariantUrl(file.ufsUrl, file.customId);
+      if (!url) {
+        throw new UploadThingError(
+          "The bulk product photo URL could not be finalized.",
+        );
+      }
+      return {
+        customId: file.customId,
+        fileKey: file.key,
+        mimeType: file.type,
+        name: file.name,
+        size: file.size,
+        url,
+      };
+    }),
   siteMediaImage: f({
     image: {
       maxFileCount: 4,
