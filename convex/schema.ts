@@ -116,6 +116,14 @@ export default defineSchema({
       filterFields: ["isActive"],
     }),
 
+  catalogCapacity: defineTable({
+    key: v.string(),
+    categoryCount: v.number(),
+    subcategoryCount: v.number(),
+    productCount: v.number(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
   catalogImportJobs: defineTable({
     externalId: v.string(),
     createdBy: v.string(),
@@ -123,9 +131,12 @@ export default defineSchema({
     status: v.union(
       v.literal("staging"),
       v.literal("ready"),
+      v.literal("validating"),
       v.literal("importing"),
+      v.literal("retrying"),
       v.literal("completed"),
       v.literal("failed"),
+      v.literal("canceled"),
     ),
     expectedRowCount: v.number(),
     stagedRowCount: v.number(),
@@ -137,11 +148,27 @@ export default defineSchema({
     readyPhotoCount: v.number(),
     distinctPhotoAssetCount: v.number(),
     failureMessage: v.optional(v.string()),
+    processingLeaseAt: v.optional(v.number()),
+    cleanupLockedAt: v.optional(v.number()),
+    providerCleanupPending: v.optional(v.boolean()),
+    providerCleanupPhase: v.optional(
+      v.union(v.literal("initial"), v.literal("final")),
+    ),
+    providerCleanupCompletedAt: v.optional(v.number()),
+    stagingRetained: v.optional(v.boolean()),
+    stagingPurgedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_external_id", ["externalId"])
-    .index("by_created_by_and_updated_at", ["createdBy", "updatedAt"]),
+    .index("by_created_by_and_updated_at", ["createdBy", "updatedAt"])
+    .index("by_status_and_updated_at", ["status", "updatedAt"])
+    .index("by_status_and_staging_retained_and_updated_at", [
+      "status",
+      "stagingRetained",
+      "updatedAt",
+    ])
+    .index("by_provider_cleanup_pending", ["providerCleanupPending"]),
 
   catalogImportRows: defineTable({
     jobExternalId: v.string(),
@@ -161,6 +188,10 @@ export default defineSchema({
       "jobExternalId",
       "status",
       "rowNumber",
+    ])
+    .index("by_job_and_normalized_part_code", [
+      "jobExternalId",
+      "normalizedPartCode",
     ]),
 
   catalogImportCategories: defineTable({
@@ -170,10 +201,7 @@ export default defineSchema({
     resolvedExternalId: v.optional(v.string()),
   })
     .index("by_job", ["jobExternalId"])
-    .index("by_job_and_normalized_name", [
-      "jobExternalId",
-      "normalizedName",
-    ]),
+    .index("by_job_and_normalized_name", ["jobExternalId", "normalizedName"]),
 
   catalogImportSubcategories: defineTable({
     jobExternalId: v.string(),
@@ -200,11 +228,20 @@ export default defineSchema({
       v.literal("error"),
     ),
     assetExternalId: v.optional(v.string()),
+    holdActive: v.optional(v.boolean()),
     message: v.optional(v.string()),
   })
     .index("by_job_and_code", ["jobExternalId", "code"])
     .index("by_job_and_hash", ["jobExternalId", "contentHash"])
-    .index("by_job_and_status", ["jobExternalId", "status"]),
+    .index("by_job_and_hash_and_status", [
+      "jobExternalId",
+      "contentHash",
+      "status",
+    ])
+    .index("by_job_and_status", ["jobExternalId", "status"])
+    .index("by_job_and_hold", ["jobExternalId", "holdActive"])
+    .index("by_content_hash", ["contentHash"])
+    .index("by_asset_and_hold", ["assetExternalId", "holdActive"]),
 
   productPhotoAssets: defineTable({
     externalId: v.string(),
@@ -219,15 +256,24 @@ export default defineSchema({
         url: v.string(),
       }),
     ),
+    lifecycle: v.optional(
+      v.union(v.literal("active"), v.literal("deleting"), v.literal("deleted")),
+    ),
+    deleteAttemptedAt: v.optional(v.number()),
+    deleteRetryCount: v.optional(v.number()),
+    deletionError: v.optional(v.string()),
+    deletedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_external_id", ["externalId"])
-    .index("by_content_hash", ["contentHash"]),
+    .index("by_content_hash", ["contentHash"])
+    .index("by_canonical_url", ["canonicalUrl"])
+    .index("by_created_at", ["createdAt"]),
 
   productPhotoCodes: defineTable({
     code: v.string(),
     contentHash: v.string(),
-    assetExternalId: v.string(),
+    assetExternalId: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_code", ["code"])

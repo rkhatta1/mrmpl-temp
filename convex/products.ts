@@ -1,8 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import {
+  invalidateCatalogCapacity,
+  normalizeCatalogKey,
+} from "./catalogLimits";
 
 function normalize(value: unknown) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 type SearchableProduct = {
@@ -46,8 +52,16 @@ export const list = query({
     const allProducts = await ctx.db.query("products").collect();
     const filtered = allProducts.filter((product) => {
       if (!args.includeInactive && product.isActive === false) return false;
-      if (!matchesField(product.category._id, args.categoryId) && !matchesField(product.category.name, args.categoryId)) return false;
-      if (!matchesField(product.subCategory._id, args.subCategoryId) && !matchesField(product.subCategory.name, args.subCategoryId)) return false;
+      if (
+        !matchesField(product.category._id, args.categoryId) &&
+        !matchesField(product.category.name, args.categoryId)
+      )
+        return false;
+      if (
+        !matchesField(product.subCategory._id, args.subCategoryId) &&
+        !matchesField(product.subCategory.name, args.subCategoryId)
+      )
+        return false;
       return matchesSearch(product, search);
     });
 
@@ -106,7 +120,9 @@ export const related = query({
     const count = args.count ?? 3;
     const allProducts = await ctx.db.query("products").collect();
     const candidates = allProducts.filter(
-      (candidate) => candidate.externalId !== product.externalId && candidate.isActive !== false,
+      (candidate) =>
+        candidate.externalId !== product.externalId &&
+        candidate.isActive !== false,
     );
 
     const sameSubcategory = candidates.filter(
@@ -137,6 +153,7 @@ export const seedBatch = mutation({
         externalId: product._id,
         productName: product.productName,
         partCode: product.partCode,
+        normalizedPartCode: normalizeCatalogKey(product.partCode),
         category: product.category,
         subCategory: product.subCategory,
         ...(product.category?._id
@@ -174,6 +191,7 @@ export const seedBatch = mutation({
       upserted += 1;
     }
 
+    await invalidateCatalogCapacity(ctx);
     return { upserted };
   },
 });

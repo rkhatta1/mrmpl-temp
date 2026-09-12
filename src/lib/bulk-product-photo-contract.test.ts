@@ -9,24 +9,28 @@ import {
 
 const HASH_A = "a".repeat(64);
 const HASH_B = "b".repeat(64);
+const JOB_ID = "12345678-1234-4234-8234-123456789abc";
 
 describe("bulk product photo variants", () => {
   test("plans and validates complete responsive sets for deduplicated content hashes", () => {
     const first = getBulkProductPhotoVariantDescriptors({
       contentHash: HASH_A,
       height: 800,
+      jobExternalId: JOB_ID,
       width: 1200,
     });
     const second = getBulkProductPhotoVariantDescriptors({
       contentHash: HASH_B,
       height: 600,
+      jobExternalId: JOB_ID,
       width: 600,
     });
 
-    expect(first.map((variant) => variant.targetWidth)).toEqual(
-      [...BULK_PRODUCT_PHOTO_VARIANT_WIDTHS],
-    );
+    expect(first.map((variant) => variant.targetWidth)).toEqual([
+      ...BULK_PRODUCT_PHOTO_VARIANT_WIDTHS,
+    ]);
     expect(first[3]).toMatchObject({ width: 1080, height: 720 });
+    expect(Math.max(...first.map((variant) => variant.customId.length))).toBeLessThanOrEqual(122);
     expect(second[3]).toMatchObject({ width: 600, height: 600 });
     expect(
       validateBulkProductPhotoVariantFilenames(
@@ -45,6 +49,7 @@ describe("bulk product photo variants", () => {
     const variants = getBulkProductPhotoVariantDescriptors({
       contentHash: HASH_A,
       height: 800,
+      jobExternalId: JOB_ID,
       width: 1200,
     });
 

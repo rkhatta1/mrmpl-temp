@@ -2,10 +2,21 @@ import { ConvexError, v } from "convex/values";
 
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import {
+  MAX_CATALOG_CATEGORIES,
+  MAX_CATALOG_PRODUCTS,
+  MAX_CATALOG_SUBCATEGORIES,
+  releaseCatalogCapacity,
+  reserveCatalogCapacity,
+} from "./catalogLimits";
+import {
+  clearProductPhotoLinks,
+  syncProductPhotoLinks,
+} from "./productPhotoLinks";
 
-const MAX_CATEGORIES = 200;
-const MAX_SUBCATEGORIES = 2_000;
-const MAX_PRODUCTS = 5_000;
+const MAX_CATEGORIES = MAX_CATALOG_CATEGORIES;
+const MAX_SUBCATEGORIES = MAX_CATALOG_SUBCATEGORIES;
+const MAX_PRODUCTS = MAX_CATALOG_PRODUCTS;
 const MAX_PRODUCTS_PER_BRANCH = 4_000;
 
 const categorySummaryValidator = v.object({
@@ -125,9 +136,84 @@ function normalizeCatalogKey(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
 
+async function findCategoryDuplicate(ctx: MutationCtx, name: string) {
+  const normalizedName = normalizeCatalogKey(name);
+  const indexed = await ctx.db
+    .query("categories")
+    .withIndex("by_normalized_name", (q) =>
+      q.eq("normalizedName", normalizedName),
+    )
+    .first();
+  if (indexed) return indexed;
+  const exact = await ctx.db
+    .query("categories")
+    .withIndex("by_name", (q) => q.eq("name", name))
+    .first();
+  if (exact) return exact;
+  const legacy = await ctx.db
+    .query("categories")
+    .withIndex("by_name")
+    .take(MAX_CATEGORIES + 1);
+  return legacy.find(
+    (category) => normalizeCatalogKey(category.name) === normalizedName,
+  );
+}
+
+async function findSubcategoryDuplicate(
+  ctx: MutationCtx,
+  categoryExternalId: string,
+  name: string,
+) {
+  const normalizedName = normalizeCatalogKey(name);
+  const indexed = await ctx.db
+    .query("subcategories")
+    .withIndex("by_category_and_normalized_name", (q) =>
+      q
+        .eq("categoryExternalId", categoryExternalId)
+        .eq("normalizedName", normalizedName),
+    )
+    .first();
+  if (indexed) return indexed;
+  const legacy = await ctx.db
+    .query("subcategories")
+    .withIndex("by_category", (q) =>
+      q.eq("categoryExternalId", categoryExternalId),
+    )
+    .take(MAX_SUBCATEGORIES + 1);
+  return legacy.find(
+    (subcategory) => normalizeCatalogKey(subcategory.name) === normalizedName,
+  );
+}
+
+async function findProductDuplicate(ctx: MutationCtx, partCode: string) {
+  const normalizedPartCode = normalizeCatalogKey(partCode);
+  const [indexed, exact] = await Promise.all([
+    ctx.db
+      .query("products")
+      .withIndex("by_normalized_part_code", (q) =>
+        q.eq("normalizedPartCode", normalizedPartCode),
+      )
+      .first(),
+    ctx.db
+      .query("products")
+      .withIndex("by_part_code", (q) => q.eq("partCode", partCode))
+      .first(),
+  ]);
+  if (indexed || exact) return indexed ?? exact;
+  const legacy = await ctx.db
+    .query("products")
+    .withIndex("by_part_code")
+    .take(MAX_PRODUCTS + 1);
+  return legacy.find(
+    (product) => normalizeCatalogKey(product.partCode) === normalizedPartCode,
+  );
+}
+
 function textList(values: string[], label: string, maxItems: number) {
   if (values.length > maxItems) {
-    throw new ConvexError(label + " can contain at most " + maxItems + " items.");
+    throw new ConvexError(
+      label + " can contain at most " + maxItems + " items.",
+    );
   }
   return values.map((value) => requiredText(value, label + " item", 500));
 }
@@ -138,10 +224,14 @@ function assertProductImage(value: string) {
   try {
     parsed = new URL(value);
   } catch {
-    throw new ConvexError("Product images must use a root-relative or HTTPS URL.");
+    throw new ConvexError(
+      "Product images must use a root-relative or HTTPS URL.",
+    );
   }
   if (parsed.protocol !== "https:") {
-    throw new ConvexError("Product images must use a root-relative or HTTPS URL.");
+    throw new ConvexError(
+      "Product images must use a root-relative or HTTPS URL.",
+    );
   }
   return parsed.toString();
 }
@@ -171,7 +261,11 @@ function normalizeProductInput(product: ProductInput) {
     material: optionalText(product.material, "Material", 500),
     type: optionalText(product.type, "Type", 500),
     finishPlating: optionalText(product.finishPlating, "Finish/plating", 500),
-    threadStandard: optionalText(product.threadStandard, "Thread standard", 500),
+    threadStandard: optionalText(
+      product.threadStandard,
+      "Thread standard",
+      500,
+    ),
     sealant: optionalText(product.sealant, "Sealant", 500),
     temperature: optionalText(product.temperature, "Temperature", 500),
     pressure: optionalText(product.pressure, "Pressure", 500),
@@ -434,21 +528,13 @@ export const listCatalog = query({
             categoryExternalId ??
             category._id;
           const canonicalSubcategoryExternalId =
-            subcategoryReferences.get(
-              "id:" + (subcategoryExternalId ?? ""),
-            ) ??
+            subcategoryReferences.get("id:" + (subcategoryExternalId ?? "")) ??
             subcategoryReferences.get("id:" + subCategory._id) ??
             subcategoryReferences.get(
-              "name:" +
-                canonicalCategoryExternalId +
-                ":" +
-                subCategory.name,
+              "name:" + canonicalCategoryExternalId + ":" + subCategory.name,
             ) ??
             subcategoryReferences.get(
-              "name:" +
-                canonicalCategoryExternalId +
-                ":" +
-                subCategory._id,
+              "name:" + canonicalCategoryExternalId + ":" + subCategory._id,
             ) ??
             subcategoryExternalId ??
             subCategory._id;
@@ -478,15 +564,16 @@ export const createCategory = mutation({
     const name = requiredText(args.name, "Category name", 120);
     const description = args.description.trim();
     if (description.length > 2_000) {
-      throw new ConvexError("Category description must be at most 2000 characters.");
+      throw new ConvexError(
+        "Category description must be at most 2000 characters.",
+      );
     }
 
-    const duplicate = await ctx.db
-      .query("categories")
-      .withIndex("by_name", (q) => q.eq("name", name))
-      .unique();
-    if (duplicate) throw new ConvexError("A category with this name already exists.");
+    const duplicate = await findCategoryDuplicate(ctx, name);
+    if (duplicate)
+      throw new ConvexError("A category with this name already exists.");
 
+    await reserveCatalogCapacity(ctx, { categories: 1 });
     const externalId = crypto.randomUUID();
     await ctx.db.insert("categories", {
       externalId,
@@ -516,10 +603,7 @@ export const updateCategory = mutation({
       "Category description",
       2_000,
     );
-    const duplicate = await ctx.db
-      .query("categories")
-      .withIndex("by_name", (q) => q.eq("name", name))
-      .unique();
+    const duplicate = await findCategoryDuplicate(ctx, name);
     if (duplicate && duplicate._id !== category._id) {
       throw new ConvexError("A category with this name already exists.");
     }
@@ -562,8 +646,10 @@ export const deleteCategory = mutation({
     if (subcategory) {
       throw new ConvexError("Delete this category's subcategories first.");
     }
-    if (product) throw new ConvexError("Delete this category's products first.");
+    if (product)
+      throw new ConvexError("Delete this category's products first.");
 
+    await releaseCatalogCapacity(ctx, { categories: 1 });
     await ctx.db.delete(category._id);
     return null;
   },
@@ -579,18 +665,19 @@ export const createSubcategory = mutation({
     await requireAdminIdentity(ctx);
     const name = requiredText(args.name, "Subcategory name", 120);
     const category = await getCategory(ctx, args.categoryExternalId);
-    if (!category) throw new ConvexError("The selected category no longer exists.");
+    if (!category)
+      throw new ConvexError("The selected category no longer exists.");
 
-    const duplicate = await ctx.db
-      .query("subcategories")
-      .withIndex("by_category_and_name", (q) =>
-        q.eq("categoryExternalId", category.externalId).eq("name", name),
-      )
-      .unique();
+    const duplicate = await findSubcategoryDuplicate(
+      ctx,
+      category.externalId,
+      name,
+    );
     if (duplicate) {
       throw new ConvexError("This category already contains that subcategory.");
     }
 
+    await reserveCatalogCapacity(ctx, { subcategories: 1 });
     const externalId = crypto.randomUUID();
     await ctx.db.insert("subcategories", {
       externalId,
@@ -615,16 +702,17 @@ export const updateSubcategory = mutation({
       getSubcategory(ctx, args.externalId),
       getCategory(ctx, args.categoryExternalId),
     ]);
-    if (!subcategory) throw new ConvexError("The subcategory no longer exists.");
-    if (!category) throw new ConvexError("The selected category no longer exists.");
+    if (!subcategory)
+      throw new ConvexError("The subcategory no longer exists.");
+    if (!category)
+      throw new ConvexError("The selected category no longer exists.");
 
     const name = requiredText(args.name, "Subcategory name", 120);
-    const duplicate = await ctx.db
-      .query("subcategories")
-      .withIndex("by_category_and_name", (q) =>
-        q.eq("categoryExternalId", category.externalId).eq("name", name),
-      )
-      .unique();
+    const duplicate = await findSubcategoryDuplicate(
+      ctx,
+      category.externalId,
+      name,
+    );
     if (duplicate && duplicate._id !== subcategory._id) {
       throw new ConvexError("This category already contains that subcategory.");
     }
@@ -662,8 +750,10 @@ export const deleteSubcategory = mutation({
     if (!subcategory) return null;
 
     const product = (await getSubcategoryProducts(ctx, subcategory))[0];
-    if (product) throw new ConvexError("Delete this subcategory's products first.");
+    if (product)
+      throw new ConvexError("Delete this subcategory's products first.");
 
+    await releaseCatalogCapacity(ctx, { subcategories: 1 });
     await ctx.db.delete(subcategory._id);
     return null;
   },
@@ -678,23 +768,40 @@ export const createProduct = mutation({
     const [category, subcategory, duplicate] = await Promise.all([
       getCategory(ctx, product.categoryExternalId),
       getSubcategory(ctx, product.subcategoryExternalId),
-      ctx.db
-        .query("products")
-        .withIndex("by_part_code", (q) => q.eq("partCode", product.partCode))
-        .unique(),
+      findProductDuplicate(ctx, product.partCode),
     ]);
-    if (!category) throw new ConvexError("The selected category no longer exists.");
-    if (!subcategory || subcategory.categoryExternalId !== category.externalId) {
-      throw new ConvexError("The selected subcategory does not belong to this category.");
+    if (!category)
+      throw new ConvexError("The selected category no longer exists.");
+    if (
+      !subcategory ||
+      subcategory.categoryExternalId !== category.externalId
+    ) {
+      throw new ConvexError(
+        "The selected subcategory does not belong to this category.",
+      );
     }
-    if (duplicate) throw new ConvexError("A product with this part code already exists.");
+    if (duplicate)
+      throw new ConvexError("A product with this part code already exists.");
 
+    await reserveCatalogCapacity(ctx, { products: 1 });
     const externalId = crypto.randomUUID();
     await ctx.db.insert("products", {
       externalId,
       ...storedProduct(product, category, subcategory),
       createdAt: new Date().toISOString(),
     });
+    const photoCodes = await syncProductPhotoLinks(
+      ctx,
+      externalId,
+      product.images,
+    );
+    if (photoCodes.length > 0) {
+      const created = await ctx.db
+        .query("products")
+        .withIndex("by_external_id", (q) => q.eq("externalId", externalId))
+        .unique();
+      if (created) await ctx.db.patch(created._id, { photoCodes });
+    }
     return { externalId };
   },
 });
@@ -714,20 +821,32 @@ export const updateProduct = mutation({
     const [category, subcategory, duplicate] = await Promise.all([
       getCategory(ctx, product.categoryExternalId),
       getSubcategory(ctx, product.subcategoryExternalId),
-      ctx.db
-        .query("products")
-        .withIndex("by_part_code", (q) => q.eq("partCode", product.partCode))
-        .unique(),
+      findProductDuplicate(ctx, product.partCode),
     ]);
-    if (!category) throw new ConvexError("The selected category no longer exists.");
-    if (!subcategory || subcategory.categoryExternalId !== category.externalId) {
-      throw new ConvexError("The selected subcategory does not belong to this category.");
+    if (!category)
+      throw new ConvexError("The selected category no longer exists.");
+    if (
+      !subcategory ||
+      subcategory.categoryExternalId !== category.externalId
+    ) {
+      throw new ConvexError(
+        "The selected subcategory does not belong to this category.",
+      );
     }
     if (duplicate && duplicate._id !== existing._id) {
       throw new ConvexError("A product with this part code already exists.");
     }
 
-    await ctx.db.patch(existing._id, storedProduct(product, category, subcategory));
+    const imagesChanged =
+      existing.images.length !== product.images.length ||
+      existing.images.some((image, index) => image !== product.images[index]);
+    const photoCodes = imagesChanged
+      ? await syncProductPhotoLinks(ctx, existing.externalId, product.images)
+      : existing.photoCodes;
+    await ctx.db.patch(existing._id, {
+      ...storedProduct(product, category, subcategory),
+      ...(imagesChanged ? { photoCodes } : {}),
+    });
     return null;
   },
 });
@@ -758,7 +877,11 @@ export const deleteProduct = mutation({
       .query("products")
       .withIndex("by_external_id", (q) => q.eq("externalId", args.externalId))
       .unique();
-    if (product) await ctx.db.delete(product._id);
+    if (product) {
+      await clearProductPhotoLinks(ctx, product.externalId);
+      await releaseCatalogCapacity(ctx, { products: 1 });
+      await ctx.db.delete(product._id);
+    }
     return null;
   },
 });

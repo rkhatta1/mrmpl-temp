@@ -1,5 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import {
+  invalidateCatalogCapacity,
+  normalizeCatalogKey,
+} from "./catalogLimits";
 
 export const list = query({
   args: {},
@@ -14,7 +18,9 @@ export const listSubcategories = query({
     if (args.categoryExternalId) {
       return await ctx.db
         .query("subcategories")
-        .withIndex("by_category", (q) => q.eq("categoryExternalId", args.categoryExternalId!))
+        .withIndex("by_category", (q) =>
+          q.eq("categoryExternalId", args.categoryExternalId!),
+        )
         .collect();
     }
     return await ctx.db.query("subcategories").collect();
@@ -35,6 +41,7 @@ export const seed = mutation({
       const doc = {
         externalId: category._id,
         name: category.name,
+        normalizedName: normalizeCatalogKey(category.name),
         description: category.description,
       };
       if (existing) {
@@ -52,6 +59,7 @@ export const seed = mutation({
       const doc = {
         externalId: subcategory._id,
         name: subcategory.name,
+        normalizedName: normalizeCatalogKey(subcategory.name),
         categoryExternalId: subcategory.category,
       };
       if (existing) {
@@ -61,6 +69,7 @@ export const seed = mutation({
       }
     }
 
+    await invalidateCatalogCapacity(ctx);
     return {
       categories: args.categories.length,
       subcategories: args.subcategories.length,

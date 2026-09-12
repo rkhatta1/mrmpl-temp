@@ -11,4 +11,11 @@ crons.daily(
   {},
 );
 
+crons.daily(
+  "clean expired catalog imports",
+  { hourUTC: 1, minuteUTC: 5 },
+  internal.catalogImport.startScheduledCleanup,
+  {},
+);
+
 export default crons;

@@ -1,11 +1,12 @@
 import { UploadThingError, UTFiles } from "uploadthing/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 
-import { isAuthenticated } from "@/lib/auth-server";
+import { api } from "@/lib/convex-server";
+import { fetchAuthQuery, isAuthenticated } from "@/lib/auth-server";
 import {
   MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES,
   getBulkProductPhotoVariantUrl,
-  validateBulkProductPhotoVariantFilenames,
+  parseBulkProductPhotoUploadBatch,
 } from "@/lib/bulk-product-photo-contract";
 import {
   MAX_PRODUCT_IMAGE_VARIANT_BYTES,
@@ -37,26 +38,28 @@ export const siteMediaFileRouter = {
         throw new UploadThingError("Unauthorized");
       }
       if (
-        files.some(
-          (file) => file.size > MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES,
-        )
+        files.some((file) => file.size > MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES)
       ) {
         throw new UploadThingError(
           "Each bulk product photo variant must be 50 KB or smaller.",
         );
       }
-      const customIds = validateBulkProductPhotoVariantFilenames(
+      const uploadBatch = parseBulkProductPhotoUploadBatch(
         files.map((file) => file.name),
       );
-      if (!customIds) {
+      if (!uploadBatch) {
         throw new UploadThingError(
           "Upload complete 480, 768, 880, and 1080 bulk product photo sets.",
         );
       }
+      await fetchAuthQuery(api.catalogImport.authorizePhotoUpload, {
+        contentHashes: uploadBatch.contentHashes,
+        jobExternalId: uploadBatch.jobExternalId,
+      });
       return {
         [UTFiles]: files.map((file, index) => ({
           ...file,
-          customId: customIds[index],
+          customId: uploadBatch.customIds[index],
         })),
       };
     })

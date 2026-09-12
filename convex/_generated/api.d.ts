@@ -13,6 +13,8 @@ import type * as auth from "../auth.js";
 import type * as brandTheme from "../brandTheme.js";
 import type * as catalogAdmin from "../catalogAdmin.js";
 import type * as catalogImport from "../catalogImport.js";
+import type * as catalogImportCleanup from "../catalogImportCleanup.js";
+import type * as catalogLimits from "../catalogLimits.js";
 import type * as categories from "../categories.js";
 import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
@@ -21,6 +23,7 @@ import type * as lib_accessCodeCrypto from "../lib/accessCodeCrypto.js";
 import type * as lib_metalsDev from "../lib/metalsDev.js";
 import type * as metalPrices from "../metalPrices.js";
 import type * as metalsApi from "../metalsApi.js";
+import type * as productPhotoLinks from "../productPhotoLinks.js";
 import type * as products from "../products.js";
 import type * as siteMedia from "../siteMedia.js";
 
@@ -36,6 +39,8 @@ declare const fullApi: ApiFromModules<{
   brandTheme: typeof brandTheme;
   catalogAdmin: typeof catalogAdmin;
   catalogImport: typeof catalogImport;
+  catalogImportCleanup: typeof catalogImportCleanup;
+  catalogLimits: typeof catalogLimits;
   categories: typeof categories;
   contacts: typeof contacts;
   crons: typeof crons;
@@ -44,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   "lib/metalsDev": typeof lib_metalsDev;
   metalPrices: typeof metalPrices;
   metalsApi: typeof metalsApi;
+  productPhotoLinks: typeof productPhotoLinks;
   products: typeof products;
   siteMedia: typeof siteMedia;
 }>;

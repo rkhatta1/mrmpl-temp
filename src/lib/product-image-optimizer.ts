@@ -186,11 +186,19 @@ export async function optimizeProductImageVariants(
 
 export async function optimizeBulkProductPhotoVariants(
   file: File,
-  { contentHash }: { contentHash: string },
+  {
+    contentHash,
+    jobExternalId,
+  }: { contentHash: string; jobExternalId: string },
 ) {
   return optimizeResponsiveImageVariants(file, {
     getDescriptors: ({ height, width }) =>
-      getBulkProductPhotoVariantDescriptors({ contentHash, height, width }),
+      getBulkProductPhotoVariantDescriptors({
+        contentHash,
+        height,
+        jobExternalId,
+        width,
+      }),
     maxBytes: MAX_BULK_PRODUCT_PHOTO_VARIANT_BYTES,
   });
 }
