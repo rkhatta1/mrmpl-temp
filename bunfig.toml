@@ -1,2 +1,3 @@
 [install]
+# Require npm releases to be at least 14 days old (seconds).
 minimumReleaseAge = 1209600
