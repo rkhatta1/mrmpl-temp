@@ -1,5 +1,5 @@
 import type { CellValue, Workbook, Worksheet } from "exceljs";
-import type { AdminCatalogSummary } from "./admin-catalog";
+import type { AdminCatalogSummary, CatalogProductInput } from "./admin-catalog";
 import {
   BULK_PRODUCT_HEADERS,
   MAX_BULK_PRODUCT_ROWS,
@@ -63,6 +63,7 @@ function headers(
 
 export async function generateBulkProductWorkbook(
   catalog: AdminCatalogSummary,
+  exampleProducts: CatalogProductInput[] = [],
 ) {
   const workbook = await newWorkbook();
   const instructions = workbook.addWorksheet("Instructions");
@@ -73,6 +74,10 @@ export async function generateBulkProductWorkbook(
     [
       "Start here",
       "Use Products for up to 3,000 NEW products. Green headers are required. Do not rename sheets or columns. Keep Metadata. Use literal values only: no formulas, embedded images, links, or dates.",
+    ],
+    [
+      "Examples (reference only)",
+      "Examples shows current products and their dimensions. This sheet is never imported. Fill the blank Products and Dimensions sheets with NEW part codes; copying an existing part code blocks import. Example photo codes are illustrative filename basenames, not existing photo mappings: replace them to match your own files.",
     ],
     [
       "Required fields",
@@ -127,6 +132,43 @@ export async function generateBulkProductWorkbook(
     "parameter",
     "value",
   ]);
+  const examples = workbook.addWorksheet("Examples");
+  headers(examples, BULK_PRODUCT_HEADERS);
+  examples.getCell("A1").note =
+    "REFERENCE ONLY: current products. This sheet is not imported. Use new part codes in Products.";
+  const samples = exampleProducts.slice(0, 3);
+  for (const product of samples) {
+    const values = {
+      product_name: product.productName,
+      part_code: product.partCode,
+      category: catalog.categories.find((item) => item.externalId === product.categoryExternalId)?.name ?? "",
+      subcategory: catalog.subcategories.find((item) => item.externalId === product.subcategoryExternalId)?.name ?? "",
+      size: product.size,
+      material: product.material,
+      type: product.type,
+      finish_plating: product.finishPlating,
+      thread_standard: product.threadStandard,
+      sealant: product.sealant,
+      temperature: product.temperature,
+      pressure: product.pressure,
+      connections: product.connections,
+      assemblies: product.assemblies,
+      grade: product.grade,
+      description: product.description,
+      applications: product.applications.join("\n"),
+      certifications: product.certifications.join("\n"),
+      additional_notes: product.additionalNotes.join("\n"),
+      photo_codes: product.images.slice(0, 2).map((_, index) => `EXAMPLE-${product.partCode}-${index + 1}`).join("\n"),
+      is_active: product.isActive ? "TRUE" : "FALSE",
+    } satisfies Record<(typeof BULK_PRODUCT_HEADERS)[number], string>;
+    examples.addRow(BULK_PRODUCT_HEADERS.map((header) => values[header])).height = 100;
+  }
+  examples.addRow([]);
+  examples.addRow([samples.length ? "Example dimensions — reference only" : "No current products available for examples."]).font = { bold: true };
+  examples.addRow([...DIMENSION_HEADERS]).font = { bold: true };
+  for (const product of samples)
+    for (const dimension of product.dimensions.slice(0, 50))
+      examples.addRow([product.partCode, dimension.parameter, dimension.value, dimension.notes ?? ""]);
   const references = workbook.addWorksheet("References");
   headers(references, REFERENCE_HEADERS);
   const ordered = [...catalog.categories].sort((a, b) =>
@@ -282,11 +324,11 @@ export async function parseBulkProductWorkbook(
         message: `Missing required sheet: ${name}. Download a new template.`,
       });
   for (const sheet of workbook.worksheets)
-    if (!SHEETS.includes(sheet.name))
+    if (!SHEETS.includes(sheet.name) && sheet.name !== "Examples")
       issues.push({
         sheet: sheet.name,
         row: 1,
-        message: "Unexpected sheet. Use only the five official sheets.",
+        message: "Unexpected sheet. Use the official sheets and optional Examples sheet.",
       });
   const metadata = workbook.getWorksheet("Metadata");
   if (
@@ -304,6 +346,7 @@ export async function parseBulkProductWorkbook(
     Instructions: 100,
     References: 3000,
     Metadata: 10,
+    Examples: 200,
   };
   for (const sheet of workbook.worksheets) {
     let lastRow = 0;

@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import ExcelJS from "exceljs";
+import { createEmptyCatalogProduct } from "./admin-catalog";
 import { BULK_PRODUCT_HEADERS } from "./bulk-product-upload";
 import {
   generateBulkProductErrorWorkbook,
@@ -30,17 +31,37 @@ const product = (partCode: string) => {
 };
 
 test("official workbook round trip preserves physical rows, ordered photos, dimensions and reference hints", async () => {
+  const example = {
+    ...createEmptyCatalogProduct("existing", "child"),
+    externalId: "sample",
+    productName: "Existing valve",
+    partCode: "01-001-001",
+    applications: ["Water", "Oil"],
+    dimensions: [{ parameter: "L", value: "12 mm", notes: "Length" }],
+    images: ["/existing-photo.webp"],
+  };
+  const currentCatalog = { ...catalog, products: [example] };
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load((await generateBulkProductWorkbook(catalog)).buffer);
+  await workbook.xlsx.load((await generateBulkProductWorkbook(currentCatalog, [example])).buffer);
   expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual([
     "Instructions",
     "Products",
     "Dimensions",
+    "Examples",
     "References",
     "Metadata",
   ]);
   expect(workbook.getWorksheet("Metadata")!.state).toBe("hidden");
+  const examples = workbook.getWorksheet("Examples")!;
+  expect(examples.getCell("B2").value).toBe("01-001-001");
+  expect(examples.getCell("C2").value).toBe("Valves");
+  expect(examples.getCell("Q2").value).toBe("Water\nOil");
+  expect(examples.getCell("T2").value).toBe("EXAMPLE-01-001-001-1");
+  expect([1, 2, 3, 4].map((column) => examples.lastRow!.getCell(column).value))
+    .toEqual(["01-001-001", "L", "12 mm", "Length"]);
+  expect(workbook.getWorksheet("Dimensions")!.rowCount).toBe(1);
   const products = workbook.getWorksheet("Products")!;
+  expect(products.getCell("A2").value).toBeNull();
   products.getRow(2).values = product("99-001-001");
   products.getRow(5).values = product("99-001-002");
   products.getCell("A10001").fill = {
@@ -53,7 +74,7 @@ test("official workbook round trip preserves physical rows, ordered photos, dime
     .addRow(["99-001-002", "A", 12, "Length"]);
   const parsed = await parseBulkProductWorkbook(
     new Uint8Array(await workbook.xlsx.writeBuffer()).buffer,
-    catalog,
+    currentCatalog,
   );
   expect(parsed.issues).toEqual([]);
   expect(parsed.rows.map((row) => row.rowNumber)).toEqual([2, 5]);

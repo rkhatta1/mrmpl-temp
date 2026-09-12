@@ -495,8 +495,21 @@ export function BulkProductUploadDialog({
     try {
       if (kind === "template") {
         if (!catalog) throw new Error("Wait for the current catalog to load.");
+        const examples = await Promise.all(
+          [...catalog.products]
+            .sort((a, b) => a.partCode.localeCompare(b.partCode))
+            .slice(0, 3)
+            .map((product) =>
+              convex.query(api.catalogAdmin.getProduct, {
+                externalId: product.externalId,
+              }),
+            ),
+        );
         downloadBulkProductWorkbook(
-          await generateBulkProductWorkbook(catalog),
+          await generateBulkProductWorkbook(
+            catalog,
+            examples.filter((product) => product !== null),
+          ),
           "mrmpl-product-import.xlsx",
         );
       } else {
