@@ -18,7 +18,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "bun test",
-    "check-types": "next typegen && tsc --noEmit"
+    "check-types": "next typegen && tsc --noEmit && tsc --noEmit -p convex/tsconfig.json"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
