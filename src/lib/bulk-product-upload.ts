@@ -20,7 +20,6 @@ export const BULK_PRODUCT_HEADERS = [
   "applications",
   "certifications",
   "additional_notes",
-  "dimensions",
   "photo_codes",
   "is_active",
 ] as const;
@@ -56,8 +55,10 @@ export type BulkProductImportRow = {
 };
 
 export type BulkProductIssue = {
+  sheet?: string;
   row: number;
-  column?: BulkProductHeader;
+  column?: string;
+  partCode?: string;
   message: string;
 };
 
@@ -68,63 +69,21 @@ export type BulkProductParseResult = {
 
 function cellText(value: unknown) {
   if (value === null || value === undefined) return "";
-  if (value instanceof Date) return value.toISOString();
-  return String(value).trim();
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "TRUE" : "FALSE";
+  return "";
 }
 
 function splitList(value: string) {
   return [
     ...new Set(
       value
-        .split(";")
-        .map((item) => item.trim())
+        .split(/\r?\n/)
+        .map((item) => item.trim().replace(/\s+/g, " "))
         .filter(Boolean),
     ),
   ];
-}
-
-function parseDimensions(
-  value: string,
-  row: number,
-  issues: BulkProductIssue[],
-) {
-  const dimensions: CatalogDimension[] = [];
-
-  for (const item of splitList(value)) {
-    const [definition, ...extraNotes] = item.split("|");
-    const separator = definition.indexOf("=");
-    const parameter =
-      separator >= 0 ? definition.slice(0, separator).trim() : "";
-    const dimensionValue =
-      separator >= 0 ? definition.slice(separator + 1).trim() : "";
-    const notes = extraNotes.join("|").trim();
-
-    if (!parameter || !dimensionValue) {
-      issues.push({
-        row,
-        column: "dimensions",
-        message:
-          "Use Parameter=Value or Parameter=Value|Notes for every dimension.",
-      });
-      continue;
-    }
-
-    dimensions.push({
-      parameter,
-      value: dimensionValue,
-      ...(notes ? { notes } : {}),
-    });
-  }
-
-  if (dimensions.length > 50) {
-    issues.push({
-      row,
-      column: "dimensions",
-      message: "A product can contain at most 50 dimensions.",
-    });
-  }
-
-  return dimensions;
 }
 
 export function normalizePhotoCode(value: unknown) {
@@ -197,8 +156,21 @@ export function parseBulkProductSheet(
   const headerIndexes = new Map<string, number>();
 
   headerRow.forEach((value, index) => {
-    const header = cellText(value).toLocaleLowerCase();
-    if (header && !headerIndexes.has(header)) headerIndexes.set(header, index);
+    const header = cellText(value);
+    if (!header) return;
+    if (headerIndexes.has(header))
+      issues.push({
+        row: 1,
+        column: header,
+        message: "Duplicate template column.",
+      });
+    else if (!BULK_PRODUCT_HEADERS.some((expected) => expected === header))
+      issues.push({
+        row: 1,
+        column: header,
+        message: "Unexpected template column.",
+      });
+    else headerIndexes.set(header, index);
   });
 
   for (const header of BULK_PRODUCT_HEADERS) {
@@ -215,7 +187,12 @@ export function parseBulkProductSheet(
 
   const dataRows = sheet
     .slice(1)
-    .filter((row) => row.some((value) => cellText(value) !== ""));
+    .map((values, index) => ({ values, rowNumber: index + 2 }))
+    .filter(({ values }) =>
+      values.some(
+        (value) => value !== null && value !== undefined && value !== "",
+      ),
+    );
   if (dataRows.length === 0) {
     issues.push({
       row: 2,
@@ -232,126 +209,154 @@ export function parseBulkProductSheet(
 
   const seenPartCodes = new Map<string, number>();
 
-  dataRows.slice(0, MAX_BULK_PRODUCT_ROWS).forEach((sourceRow, rowIndex) => {
-    const rowNumber = rowIndex + 2;
-    const get = (header: BulkProductHeader) =>
-      sourceRow[headerIndexes.get(header)!];
-    const text = (header: BulkProductHeader) => cellText(get(header));
-
-    const productName = text("product_name");
-    const partCode = text("part_code");
-    const categoryName = text("category");
-    const subcategoryName = text("subcategory");
-    const size = text("size");
-    const material = text("material");
-    const type = text("type");
-    const finishPlating = text("finish_plating");
-    const threadStandard = text("thread_standard");
-    const sealant = text("sealant");
-    const temperature = text("temperature");
-    const pressure = text("pressure");
-    const connections = text("connections");
-    const assemblies = text("assemblies");
-    const grade = text("grade");
-    const description = text("description");
-
-    requiredText(productName, rowNumber, "product_name", 200, issues);
-    requiredText(partCode, rowNumber, "part_code", 120, issues);
-    requiredText(categoryName, rowNumber, "category", 120, issues);
-    requiredText(subcategoryName, rowNumber, "subcategory", 120, issues);
-    optionalText(size, rowNumber, "size", 500, issues);
-    optionalText(material, rowNumber, "material", 500, issues);
-    optionalText(type, rowNumber, "type", 500, issues);
-    optionalText(finishPlating, rowNumber, "finish_plating", 500, issues);
-    optionalText(threadStandard, rowNumber, "thread_standard", 500, issues);
-    optionalText(sealant, rowNumber, "sealant", 500, issues);
-    optionalText(temperature, rowNumber, "temperature", 500, issues);
-    optionalText(pressure, rowNumber, "pressure", 500, issues);
-    optionalText(connections, rowNumber, "connections", 2_000, issues);
-    optionalText(assemblies, rowNumber, "assemblies", 2_000, issues);
-    optionalText(grade, rowNumber, "grade", 500, issues);
-    optionalText(description, rowNumber, "description", 10_000, issues);
-
-    const normalizedPartCode = partCode.toLocaleLowerCase();
-    const previousRow = seenPartCodes.get(normalizedPartCode);
-    if (normalizedPartCode && previousRow) {
-      issues.push({
-        row: rowNumber,
-        column: "part_code",
-        message: `Duplicate part_code; first used on row ${previousRow}.`,
+  dataRows
+    .slice(0, MAX_BULK_PRODUCT_ROWS)
+    .forEach(({ values: sourceRow, rowNumber }) => {
+      sourceRow.forEach((value, index) => {
+        if (
+          value != null &&
+          typeof value !== "string" &&
+          !(typeof value === "number" && Number.isFinite(value)) &&
+          !(typeof value === "boolean" && headerRow[index] === "is_active")
+        ) {
+          issues.push({
+            row: rowNumber,
+            column: cellText(headerRow[index]),
+            message:
+              "Use literal text or numbers; formulas and other cell types are not supported.",
+          });
+        }
+        if (value != null && value !== "" && !cellText(headerRow[index]))
+          issues.push({
+            row: rowNumber,
+            column: String(index + 1),
+            message: "Value has no template column header.",
+          });
       });
-    } else if (normalizedPartCode) {
-      seenPartCodes.set(normalizedPartCode, rowNumber);
-    }
+      const get = (header: BulkProductHeader) =>
+        sourceRow[headerIndexes.get(header)!];
+      const text = (header: BulkProductHeader) => cellText(get(header));
 
-    const applications = splitList(text("applications"));
-    const certifications = splitList(text("certifications"));
-    const additionalNotes = splitList(text("additional_notes"));
-    for (const [column, values] of [
-      ["applications", applications],
-      ["certifications", certifications],
-      ["additional_notes", additionalNotes],
-    ] as const) {
-      if (values.length > 50) {
+      const productName = text("product_name").replace(/\s+/g, " ");
+      const partCode = text("part_code").replace(/\s+/g, " ");
+      const categoryName = text("category").replace(/\s+/g, " ");
+      const subcategoryName = text("subcategory").replace(/\s+/g, " ");
+      const size = text("size");
+      const material = text("material");
+      const type = text("type");
+      const finishPlating = text("finish_plating");
+      const threadStandard = text("thread_standard");
+      const sealant = text("sealant");
+      const temperature = text("temperature");
+      const pressure = text("pressure");
+      const connections = text("connections");
+      const assemblies = text("assemblies");
+      const grade = text("grade");
+      const description = text("description");
+
+      requiredText(productName, rowNumber, "product_name", 200, issues);
+      requiredText(partCode, rowNumber, "part_code", 120, issues);
+      if (!/^\d{2}-\d{3}-\d{3}$/.test(partCode))
         issues.push({
           row: rowNumber,
-          column,
-          message: `${column} can contain at most 50 values.`,
+          column: "part_code",
+          message: "Use the NN-NNN-NNN part code format, stored as text.",
         });
-      }
-      if (values.some((value) => value.length > 500)) {
+      requiredText(categoryName, rowNumber, "category", 120, issues);
+      requiredText(subcategoryName, rowNumber, "subcategory", 120, issues);
+      optionalText(size, rowNumber, "size", 500, issues);
+      optionalText(material, rowNumber, "material", 500, issues);
+      optionalText(type, rowNumber, "type", 500, issues);
+      optionalText(finishPlating, rowNumber, "finish_plating", 500, issues);
+      optionalText(threadStandard, rowNumber, "thread_standard", 500, issues);
+      optionalText(sealant, rowNumber, "sealant", 500, issues);
+      optionalText(temperature, rowNumber, "temperature", 500, issues);
+      optionalText(pressure, rowNumber, "pressure", 500, issues);
+      optionalText(connections, rowNumber, "connections", 2_000, issues);
+      optionalText(assemblies, rowNumber, "assemblies", 2_000, issues);
+      optionalText(grade, rowNumber, "grade", 500, issues);
+      optionalText(description, rowNumber, "description", 10_000, issues);
+
+      const normalizedPartCode = partCode.toLocaleLowerCase();
+      const previousRow = seenPartCodes.get(normalizedPartCode);
+      if (normalizedPartCode && previousRow) {
         issues.push({
           row: rowNumber,
-          column,
-          message: `${column} values must be at most 500 characters.`,
+          column: "part_code",
+          message: `Duplicate part_code; first used on row ${previousRow}.`,
+        });
+      } else if (normalizedPartCode) {
+        seenPartCodes.set(normalizedPartCode, rowNumber);
+      }
+
+      const applications = splitList(text("applications"));
+      const certifications = splitList(text("certifications"));
+      const additionalNotes = splitList(text("additional_notes"));
+      for (const [column, values] of [
+        ["applications", applications],
+        ["certifications", certifications],
+        ["additional_notes", additionalNotes],
+      ] as const) {
+        if (values.length > 50) {
+          issues.push({
+            row: rowNumber,
+            column,
+            message: `${column} can contain at most 50 values.`,
+          });
+        }
+        if (values.some((value) => value.length > 500)) {
+          issues.push({
+            row: rowNumber,
+            column,
+            message: `${column} values must be at most 500 characters.`,
+          });
+        }
+      }
+
+      const photoCodes = splitList(text("photo_codes")).flatMap((value) => {
+        const normalized = normalizePhotoCode(value);
+        if (normalized) return [normalized];
+        issues.push({
+          row: rowNumber,
+          column: "photo_codes",
+          message: `Invalid photo code: ${value}. Use letters, numbers, hyphens, or underscores.`,
+        });
+        return [];
+      });
+      if (photoCodes.length > 12) {
+        issues.push({
+          row: rowNumber,
+          column: "photo_codes",
+          message: "A product can reference at most 12 photo codes.",
         });
       }
-    }
 
-    const photoCodes = splitList(text("photo_codes")).flatMap((value) => {
-      const normalized = normalizePhotoCode(value);
-      if (normalized) return [normalized];
-      issues.push({
-        row: rowNumber,
-        column: "photo_codes",
-        message: `Invalid photo code: ${value}. Use letters, numbers, hyphens, or underscores.`,
+      rows.push({
+        rowNumber,
+        productName,
+        partCode,
+        categoryName,
+        subcategoryName,
+        size,
+        material,
+        type,
+        finishPlating,
+        threadStandard,
+        sealant,
+        temperature,
+        pressure,
+        connections,
+        assemblies,
+        grade,
+        description,
+        applications,
+        certifications,
+        additionalNotes,
+        dimensions: [],
+        photoCodes: [...new Set(photoCodes)],
+        isActive: parseActive(get("is_active"), rowNumber, issues),
       });
-      return [];
     });
-    if (photoCodes.length > 12) {
-      issues.push({
-        row: rowNumber,
-        column: "photo_codes",
-        message: "A product can reference at most 12 photo codes.",
-      });
-    }
-
-    rows.push({
-      rowNumber,
-      productName,
-      partCode,
-      categoryName,
-      subcategoryName,
-      size,
-      material,
-      type,
-      finishPlating,
-      threadStandard,
-      sealant,
-      temperature,
-      pressure,
-      connections,
-      assemblies,
-      grade,
-      description,
-      applications,
-      certifications,
-      additionalNotes,
-      dimensions: parseDimensions(text("dimensions"), rowNumber, issues),
-      photoCodes,
-      isActive: parseActive(get("is_active"), rowNumber, issues),
-    });
-  });
 
   return { rows, issues };
 }

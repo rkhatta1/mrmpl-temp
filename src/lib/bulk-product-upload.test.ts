@@ -8,7 +8,7 @@ import {
 function row(overrides: Record<string, unknown> = {}) {
   const values: Record<string, unknown> = {
     product_name: "Fixture valve",
-    part_code: "FIX-001",
+    part_code: "99-001-001",
     category: "Valves",
     subcategory: "Ball valves",
     size: "1/2 in",
@@ -23,11 +23,10 @@ function row(overrides: Record<string, unknown> = {}) {
     assemblies: "Body; stem",
     grade: "AISI 316",
     description: "Fixture",
-    applications: "Chemical; Oil & gas",
+    applications: "Chemical; Oil & gas\nWater",
     certifications: "ISO 9001",
     additional_notes: "Local test",
-    dimensions: "A=20 mm|Overall length",
-    photo_codes: "photo-a; PHOTO-B",
+    photo_codes: "photo-a\nPHOTO-B",
     is_active: true,
     ...overrides,
   };
@@ -39,23 +38,26 @@ describe("bulk product workbook parser", () => {
     const result = parseBulkProductSheet([
       [...BULK_PRODUCT_HEADERS],
       row(),
-      row({ part_code: "FIX-002", product_name: "Second valve" }),
+      [],
+      row({ part_code: "99-001-002", product_name: "Second valve" }),
     ]);
 
     expect(result.issues).toEqual([]);
     expect(result.rows).toHaveLength(2);
     expect(result.rows[0]).toMatchObject({
       photoCodes: ["PHOTO-A", "PHOTO-B"],
-      dimensions: [{ parameter: "A", value: "20 mm", notes: "Overall length" }],
+      applications: ["Chemical; Oil & gas", "Water"],
+      dimensions: [],
       isActive: true,
     });
+    expect(result.rows[1].rowNumber).toBe(4);
   });
 
   test("reports normalized duplicate part codes", () => {
     const result = parseBulkProductSheet([
       [...BULK_PRODUCT_HEADERS],
       row(),
-      row({ part_code: "fix-001" }),
+      row({ part_code: "99-001-001" }),
     ]);
 
     expect(result.issues).toContainEqual({
